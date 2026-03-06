@@ -1,0 +1,19 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:converts="clr-namespace:FindText.Converts"   >
+
+    <!--<converts:FalseToVisibilityConverter x:Key="falseToVisibility" />-->
+
+    <!--<converts:NullToVisibleConverter x:Key="nullToVisibility" />-->
+
+    <!--<converts:IntToStringConverter x:Key="intToString" />-->
+
+    <converts:ZeroToVisibilityConvert x:Key="zeroToVisibility" />
+
+    <converts:IntToBrushConverter x:Key="intToBrush" />
+
+    <converts:WaterMarkConvert x:Key="waterMark" />
+
+    
+
+</ResourceDictionary>

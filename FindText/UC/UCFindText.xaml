@@ -1,0 +1,421 @@
+﻿<UserControl x:Class="FindText.UC.UCFindText"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:app="clr-namespace:FindText"
+             xmlns:localUC="clr-namespace:FindText.UC"
+             xmlns:Converts="clr-namespace:FindText.Converts"
+             x:Name="ucFindText1"          
+             xmlns:this="FindText.UC.UCFindText"
+             mc:Ignorable="d"              
+             d:DesignHeight="400" d:DesignWidth="960" >
+
+    <UserControl.Resources>
+
+        <Converts:WaterMarkConvert x:Key="_waterMarkConvert" />
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Brush03}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+        
+    </UserControl.Resources>
+
+    <UserControl.CommandBindings>
+        <CommandBinding Command="Help"  Executed="HelpCommandHandler"  CanExecute="CanExecuteHandler" />
+    </UserControl.CommandBindings>
+
+
+        <Grid Background="{DynamicResource BackgroundBrush}" DataContext="{x:Static app:TextCache.Text}" >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="1"/>
+            <RowDefinition Height="80*"/>
+            <RowDefinition Height="26"/>
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="DivRow1" Grid.Row="0" Margin="0,6,32,0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="Auto" MinWidth="200" MaxWidth="300" />
+                <ColumnDefinition Width="24"/>
+
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="Auto" MinWidth="68" MaxWidth="120" />
+                <ColumnDefinition Width="24"/>
+
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="50*" MinWidth="200" MaxWidth="640"  />
+
+                <ColumnDefinition Width="Auto"/>
+
+                <ColumnDefinition Width="6"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="🔤：" Grid.Column="0" Margin="8,0,0,0" HorizontalAlignment="Right" Visibility="Visible" FontSize="18" />
+            <TextBox x:Name="inputSearchText" Grid.Column="1" Height="28" MaxWidth="480" Style="{DynamicResource WatermarkTextBoxStyle}"
+                     BorderThickness="0,0,0,1"  Foreground="{DynamicResource HighlightBrush}" Margin="0,0,48,0" TabIndex="0" FontSize="16"
+                     localUC:WatermarkHelper.Watermark="{Binding [WM.Search]}" />
+
+            <Button x:Name="buttonFind" Content="🔍︎" Grid.Column="1" Height="32" Width="48"  IsDefault="True" Margin="0,0,0,4" 
+                    Background="Transparent" HorizontalAlignment="Right" FontSize="22" Padding="0" />
+
+            <Button Command="Help" CommandParameter="Find" Grid.Column="2" Style="{StaticResource HelpButtonStyle}" Opacity="0.8" />
+
+            <TextBlock Text="📄：" Grid.Column="3" HorizontalAlignment="Right" FontSize="18" />
+            <TextBox x:Name="inputPattern" Grid.Column="4" BorderThickness="0,0,0,1" Foreground="{DynamicResource HighlightBrush}" Height="26" MinWidth="60" Text="*.lua" TabIndex="1" />
+            <Button Grid.Column="5" Content="?" Style="{StaticResource HelpButtonStyle}" Command="Help"  CommandParameter="Pattern" Opacity="0.8" />
+
+            <TextBlock Text="📁：" Grid.Column="6" HorizontalAlignment="Right" FontSize="18" />
+            <TextBox x:Name="inputFolder"  Grid.Column="7" Padding="0,0,48,0" Height="26" Foreground="{DynamicResource HighlightBrush}" 
+                     Text="" BorderThickness="0,0,0,1" TabIndex="2" />
+            <Button x:Name="buttonSelectDir" Grid.Column="7" Height="24" Padding="0,0,0,3" Width="42"  Content="..." FontSize="16"  Margin="0,0,1,0" HorizontalAlignment="Right" TabIndex="3" />
+
+            <!--<Button x:Name="buttonDebug" Grid.Column="8" Content="调试" BorderThickness="1" Width="60" Height="26"  />-->
+
+        </Grid>
+
+        <Grid x:Name="DivParams" Grid.Row="1" Opacity="0.8" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="36"/>
+                <RowDefinition Height="1"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid x:Name="DivParams1" Grid.Row="0" Background="{DynamicResource Brush07}" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="42" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="30*"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0" >
+                    <TextBlock Text="{Binding [FT.MaxSizeLabel]}"  HorizontalAlignment="Right" />
+                    <localUC:NumericPicker x:Name="inputMaxSize" Height="26" BorderThickness="0,0,0,1" Value="1" Width="42" FontSize="14" 
+                                           Foreground="{DynamicResource HighlightBrush}" 
+                                           Background="{DynamicResource Brush07}" />
+                    <TextBlock Text="{Binding [FT.MaxSize]}"  />
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="12,8,6,8" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="8,0,0,0" >
+                    <CheckBox x:Name="checkboxCaseSensitive" Content="{Binding [FT.Case]}"  IsChecked="True" BorderBrush="{DynamicResource HighlightBrush}"  />
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="6,8,6,8" />
+                </StackPanel>
+
+                <!--<StackPanel Grid.Column="4" Orientation="Horizontal" Margin="8,0,0,0" >
+                    <CheckBox x:Name="checkboxWholeWord" Content="{Binding [FT.Whole]}" Margin="0,0,0,0" BorderBrush="{DynamicResource HighlightBrush}" />
+                    <Button  Style="{StaticResource HelpButtonStyle}" Command="Help" CommandParameter="Whole" />
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="6,8,6,8" />
+                </StackPanel>-->
+
+                <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="8,0,0,0" >
+                    <CheckBox x:Name="checkBoxIgnoreError" Content="{Binding [FT.Ignore]}" IsChecked="False" BorderBrush="{DynamicResource HighlightBrush}" />
+                    <Button  Command="Help" CommandParameter="IgnoreError" Style="{StaticResource HelpButtonStyle}" Margin="6,0,0,0"/>
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="6,8,6,8" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="6" Orientation="Horizontal" Margin="8,0,0,0" >
+                    <CheckBox x:Name="checkBoxRegex" Content="{Binding [FT.Regex]}" IsChecked="False" BorderBrush="{DynamicResource HighlightBrush}" />
+                    <Button Command="Help" CommandParameter="Regex" Margin="6,0,0,0" Style="{StaticResource HelpButtonStyle}"  />
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="6,8,6,8" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="7" Orientation="Horizontal" Margin="8,0,0,0" >
+                    <TextBlock Text="{Binding [FT.Encoding]}"  HorizontalAlignment="Right" />
+                    <ComboBox x:Name="comboxEncoding" Width="110" BorderBrush="{DynamicResource Brush03}" Background="{DynamicResource Brush07}" DisplayMemberPath="Value" BorderThickness = "0,0,0,1" Height="26" />
+                    <Button Command="Help" CommandParameter="Encoding" Style="{StaticResource HelpButtonStyle}" />
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="6,8,6,8" />
+                </StackPanel>
+
+
+                <!--<StackPanel Grid.Column="7" Orientation="Horizontal" Margin="8,0,0,0"  Visibility="Collapsed" >
+                    <TextBlock Text="{Binding [FT.Date]}"  HorizontalAlignment="Right" />
+                    <ComboBox x:Name="comboxDate" Width="110" BorderBrush="{DynamicResource Brush03}" Background="{DynamicResource Brush07}" BorderThickness = "0,0,0,1" Height="26" SelectedIndex="0">
+                        <ComboBoxItem Content="不限" />
+                        <ComboBoxItem Content="3天内" />
+                        <ComboBoxItem Content="1周内" />
+                        <ComboBoxItem Content="1月内" />
+                        <ComboBoxItem Content="1年内" />
+                    </ComboBox>
+                    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource Brush06}" Margin="6,8,6,8" />
+                </StackPanel>-->
+
+            </Grid>
+
+            <Grid x:Name="DivIgnores" Grid.Row="2" Visibility="Collapsed" d:Visibility="Visible" Height="36" Background="{DynamicResource Brush07}" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="50*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="8" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="🚫：" HorizontalAlignment="Right" Grid.Column="0" Foreground="{DynamicResource RedBrush}" Opacity="0.7" />
+
+                <Grid  Grid.Column="1" Height="26" Margin="0,0,16,0">
+                    <ToggleButton x:Name="buttonGetExtName" Style="{StaticResource ComboBoxToggleButtonStyle}" Foreground="{DynamicResource HighlightBrush}" 
+                                  HorizontalAlignment="Right" Width="26" Margin="0,0,0,0" />
+                    <TextBox x:Name="inputIgnores" MinWidth="160" Foreground="{DynamicResource HighlightBrush}" Background="{DynamicResource Brush07}" Text="" Margin="0,0,16,0" BorderThickness="0,0,0,1" />
+                    <Popup x:Name="PART_Popup" AllowsTransparency="true" Width="{Binding ElementName=inputIgnores,Path=ActualWidth}"
+                          PopupAnimation="Slide" IsOpen="{Binding ElementName=buttonGetExtName, Path=IsChecked}"  >
+                        
+                        <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="DarkGray" BorderThickness="1" >
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="32"/>
+                                    <RowDefinition Height="32"/>
+                                    <RowDefinition Height="90*"/>
+                                </Grid.RowDefinitions>
+                                
+                                <Grid Grid.Row="0" >
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="90*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button x:Name="buttonCloseExtPanel" Content="❌" Foreground="{DynamicResource RedBrush}" HorizontalContentAlignment="Right" FontSize="12" 
+                                            Width="{Binding ElementName=inputIgnores,Path=ActualWidth}" Padding="0,0,26,0"  />
+                                    <TextBlock Text="{Binding Path=DefaultIgnores,Source={x:Static app:AppCache.Instance}}" Grid.Column="1" HorizontalAlignment="Left"  />
+                                </Grid>
+                                <Border Grid.Row="0" BorderThickness="0,0,0,1"  BorderBrush="DarkGray" />
+                                <TextBlock Text="  请勾选要忽略的类型：" Grid.Row="1" HorizontalAlignment="Left"  />
+                                <ListBox x:Name="listboxExtNames" Grid.Row="2" BorderThickness="0" Style="{StaticResource ListboxStyleGroup}">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding Value}" IsChecked="{Binding IsSelected,Mode=TwoWay}" Height="26" 
+                                                    />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+                    </Popup>
+
+                </Grid>
+
+                <Button Command="Help" CommandParameter="Ignore" Style="{StaticResource HelpButtonStyle}" Grid.Column="2" />
+                <!--<Border BorderThickness="0,0,1,0" BorderBrush="{StaticResource Brush04}" Margin="6,8,6,8" />-->
+
+            </Grid>
+
+        </Grid>
+
+        <Grid x:Name="DivHis" Grid.Row="2" Background="{DynamicResource Brush07}"  >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="23"/>
+                <ColumnDefinition Width="60*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="8"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Text="🗐 ：" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,3,0,0" FontSize="18" Visibility="Collapsed" />
+
+            <ListBox x:Name="listboxHistory" Grid.Column="1" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,3,6,0"
+                    d:ItemsSource="{d:SampleData ItemCount=3}"  Background="{DynamicResource Brush07}" 
+                    ScrollViewer.VerticalScrollBarVisibility="Auto" Style="{DynamicResource ListboxStyleGroup}" >
+
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel IsItemsHost="True" Orientation="Horizontal"   />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="Gray" BorderThickness="0" Padding="0" Height="24" >
+                            <Grid  Margin="3,0,3,0"  >
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="60*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0"  MinWidth="48" TextAlignment="Center" 
+                                          d:Foreground="{DynamicResource Brush01}" FontSize="14"
+                                          Margin="3,0,3,0" Foreground="{Binding Position,Converter={StaticResource intToBrush}}"  />
+
+                                <Button Content="×"  Width="20" Height="20" Foreground="#FFB81B1B" Tag="{Binding}" Grid.Column="1" 
+                                       d:Visibility="Visible" BorderBrush="Transparent"
+                                       Visibility="{Binding Position,Converter={StaticResource zeroToVisibility}}"
+                                       Style="{StaticResource EllipseButtonStyle}"  Margin="0,0,0,0"
+                                       Click="ListItemButton_Click"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Command="Help" CommandParameter="His" Style="{DynamicResource HelpButtonStyle}" Grid.Column="2" />
+        </Grid>
+
+
+        <Grid x:Name="DivProgress" Grid.RowSpan="3" Visibility="Collapsed"  Background="{DynamicResource Brush06}" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="60*"/>
+                <ColumnDefinition Width="60"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="60"/>
+                <RowDefinition Height="18"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="50*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock x:Name="textblockProgressTitle" Text="正在搜索..." Grid.Row="0" Grid.Column="1"  Margin="0,0,18,0" VerticalAlignment="Center" FontSize="16" 
+                      Foreground="{DynamicResource Brush03}" />
+
+            <ProgressBar x:Name="progressBar1" Grid.Column="1" Grid.Row="1" Value="90" Maximum="100"  />
+
+            <StackPanel Orientation="Horizontal" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="1" >
+                <TextBlock x:Name="textblockProgressInfo" Text="" Foreground="{DynamicResource BackgroundBrush}" />
+            </StackPanel>
+
+            <Button x:Name="buttonCancel" Grid.Column="1" Grid.Row="2" Height="26" Width="80"  Content="取消"  />
+
+        </Grid>
+
+
+        <Grid x:Name="DivResultDataGrid" Grid.Row="4" >
+            <!-- 搜索结果 -->
+            <DataGrid x:Name="datagridResult" Grid.Row="3" AutoGenerateColumns="False"  CanUserResizeColumns="True" RowHeight="30" RowHeaderWidth="0"
+                      SelectionMode="Extended" ColumnHeaderHeight="30" d:ItemsSource="{d:SampleData ItemCount=30}" FontSize="14" 
+                      Foreground="{DynamicResource Brush03}" Background="{DynamicResource BackgroundBrush}" BorderThickness="0,0,0,0"
+                      VerticalGridLinesBrush="{StaticResource TransparentBrush}" HorizontalGridLinesBrush="{StaticResource TransparentBrush}"                             
+                      >
+
+                <DataGrid.Columns>
+                    
+                    <DataGridTemplateColumn x:Name="ColumnFilePath" Width="600" SortMemberPath="FilePath" MaxWidth="1920"   IsReadOnly="True" >
+                        <DataGridTemplateColumn.Header >
+                            <Grid >
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="25*" />
+                                    <ColumnDefinition Width="55*"  />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding [FT.ColPath],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="26,0,0,0"  >
+                                    <TextBox x:Name="inputResultFilter" Grid.Column="1"  Height="23" FontSize="11" MinWidth="160" MaxWidth="220"
+                                         localUC:WatermarkHelper.Watermark="{Binding [FT.GridFind],Source={x:Static app:TextCache.Text}}"
+                                         Style="{DynamicResource WatermarkTextBoxStyle}"
+                                         Background="Transparent" BorderThickness="0,0,0,1" Foreground="{DynamicResource HighlightBrush}" BorderBrush="{DynamicResource BorderBrush}" />
+
+                                    <StackPanel x:Name="DivOpenSel" Orientation="Horizontal" Visibility="Collapsed" d:Visibility="Visible" >
+                                        <Button x:Name="buttonOpenSelection" Content="{Binding [FT.OpenSel],Source={x:Static app:TextCache.Text}}" Margin="8,0,0,0" Background="Transparent" />
+                                        <Button Command="Help" CommandParameter="OpenFile" Style="{StaticResource HelpButtonStyle}" />
+                                    </StackPanel>
+
+                                </StackPanel>
+
+                            </Grid>
+                        </DataGridTemplateColumn.Header>
+
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <TextBlock Text="{Binding FilePath}" HorizontalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn x:Name="ColumnSize" Binding="{Binding Size}" Width="80" SortMemberPath="Size"  IsReadOnly="True" >
+                        <DataGridTextColumn.Header>
+                            <Grid>
+                                <TextBlock Text="{Binding [FT.ColSize],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                            </Grid>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+
+                    <DataGridTemplateColumn  x:Name="ColumnNote" Width="200"  SortMemberPath="Note" CanUserSort="True" MaxWidth="600"  IsReadOnly="False"  >
+                        <DataGridTemplateColumn.Header >
+                            <Grid >
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="30*" />
+                                    <ColumnDefinition Width="Auto"  />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding [FT.ColNote],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                            </Grid>
+                        </DataGridTemplateColumn.Header>
+
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="90*" />
+                                    </Grid.ColumnDefinitions>
+                                    <!--<Button x:Name="buttonRowNote" Content="📝" Width="18" FontSize="10" Padding="0" Style="{DynamicResource EllipseButtonStyle}" Grid.Column="0" Opacity="0.8" Background="Transparent" />-->
+                                    <TextBlock Text="{Binding Note}" Grid.Column="1" FontSize="11" Foreground="{DynamicResource ForegroundBrush2}" />
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+
+                        <DataGridTemplateColumn.CellEditingTemplate >
+                            <DataTemplate>
+                                <TextBox x:Name="editboxNote" Text="{Binding Note,UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" HorizontalAlignment="Stretch" 
+                                         Width="{Binding Path=ActualWidth, ElementName=ColumnNote}" AcceptsReturn="True" FontSize="12" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn x:Name="ColumnPreview" Binding="{Binding Preview}" Width="200" FontSize="12" SortMemberPath="Preview"  IsReadOnly="True" >
+                        <DataGridTextColumn.Header>
+                            <Grid>
+                                <TextBlock Text="{Binding [FT.ColPreview],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                            </Grid>
+                        </DataGridTextColumn.Header>
+                    </DataGridTextColumn>
+
+                    <DataGridTemplateColumn   IsReadOnly="True" />
+
+                </DataGrid.Columns>
+   
+            </DataGrid>
+
+        </Grid>
+
+
+        <Grid x:Name="DivInfoBar" Grid.Row="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto" MinWidth="48"/>
+                <ColumnDefinition Width="Auto" MinWidth="180"/>
+                <ColumnDefinition Width="50*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock  Text="{Binding [FT.Total]}" Grid.Column="0" Margin="16,0,0,0"  />
+            <TextBlock x:Name="msgRevCount" FontSize="14" Text="{Binding ElementName=datagridResult,Path=Items.Count}"  Grid.Column="1" HorizontalAlignment="Left"  />
+
+            <TextBox x:Name="msgStatus" Grid.Column="2" Text="" IsReadOnly="True" Foreground="{DynamicResource Brush03}" BorderThickness="0" />
+
+            <TextBox x:Name="msgSelectedInfo" Grid.Column="3" Text="" IsReadOnly="True" Height="18" BorderThickness="0" />
+
+            <StackPanel Grid.Column="3" Orientation="Horizontal" >
+                <!--<Button x:Name="buttonSaveReslt" Content="保存结果" Margin="0,0,8,0" Visibility="Collapsed" />
+                <Button x:Name="buttonLoadReslt" Content="载入结果" Margin="0,0,8,0" Visibility="Collapsed" />-->
+            </StackPanel>
+
+        </Grid>
+
+
+        <Grid x:Name="DivHelp"  Grid.Row="4" Grid.ColumnSpan="10" Background="{DynamicResource BackgroundBrush2}" Visibility="Collapsed"  >
+            <!--<Grid Background="{StaticResource Brush05}" Opacity="0.9" IsHitTestVisible="False" />-->
+
+            <TextBox x:Name="textHelp" Text="HelpInfo" Margin="64,48,64,8" FontSize="16" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" 
+                       TextWrapping="Wrap" IsReadOnly="True" Background="{DynamicResource Brush06}" BorderThickness="0" Padding="16"
+                       Foreground="{DynamicResource ForegroundBrush2}"/>
+            
+            <Button x:Name="buttonHelpClose" Content="❌" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="16" Foreground="{DynamicResource RedBrush}" 
+                    BorderBrush="{StaticResource TransparentBrush}" Style="{StaticResource EllipseButtonStyle}" Width="32" Height="32" Padding="0"/>
+
+        </Grid>
+
+    </Grid>
+</UserControl>

@@ -1,0 +1,35 @@
+﻿<UserControl x:Class="FindText.UC.NumericPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             x:Name="self"
+             mc:Ignorable="d" 
+             d:DesignHeight="24" d:DesignWidth="42">
+
+    <Grid x:Name="DivRoot" DataContext="{Binding}">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="80*"/>
+            <ColumnDefinition Width="16"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50*"/>
+            <RowDefinition Height="50*"/>
+        </Grid.RowDefinitions>
+
+
+        <TextBox x:Name="textboxValue" Text="0" Foreground="{Binding  ElementName=self,Path=Foreground}" FontSize="{Binding  ElementName=self,Path=FontSize}" 
+                 Grid.RowSpan="2" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" Background="Transparent" />
+
+        <RepeatButton x:Name="buttonUp" Style="{StaticResource ScrollBarButtonStyle}" Grid.Column="1" Grid.Row="0" Opacity="0.3"  Click="ButtonUp_Click" Delay="200" Interval="1" />
+
+        <RepeatButton x:Name="buttonDown" Style="{StaticResource ScrollBarButtonStyle}"  Grid.Column="1" Grid.Row="1" Opacity="0.3" Click="buttonDown_Click" RenderTransformOrigin="0.5,0.5" Delay="200" Interval="1" >
+            <RepeatButton.RenderTransform>
+                    <ScaleTransform ScaleY="-1" ScaleX="1"/>
+            </RepeatButton.RenderTransform>
+        </RepeatButton>
+
+
+    </Grid>
+</UserControl>
