@@ -29,6 +29,7 @@ namespace FindText
         internal static readonly string[] SeparatorComma = { "," };
         internal static readonly string[] SseparatorSpace ={ " " };
         internal static readonly string[] Wildcard = { "*", "*.*", "*.", ".*", "." };
+        internal static readonly string[] SeparatorStar = { ",","*" };
 
         #endregion
 

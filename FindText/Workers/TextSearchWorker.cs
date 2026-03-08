@@ -24,7 +24,7 @@ namespace FindText.Workers
         TextSearchOption _option;
         int _maxSize;
         string[] _defaultIgnores;
-        string[] _ignores;
+        List<string> _ignores;
         StringComparison _comparison;
         string _msgGetDirs;
         string _msgGetFiles;
@@ -38,7 +38,7 @@ namespace FindText.Workers
 
             _option = option;
             //_option.Tag = null;
-            _ignores = option.Ignores.Split(AppCache.SeparatorComma, StringSplitOptions.RemoveEmptyEntries);
+            _ignores = option.Ignores.ToLower().Split(AppCache.SeparatorStar, StringSplitOptions.RemoveEmptyEntries).ToList();
             _maxSize = option.MaxSize * 1024 * 1024;
             _results = new ObservableCollection<TextSearchResult>();
             _comparison = _option.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
@@ -86,9 +86,15 @@ namespace FindText.Workers
                     {
                         if (file.Length <= _maxSize && !_defaultIgnores.Contains(file.Extension.ToLower()))
                         {
-                            if (_option.IsAllFiles == false || (_option.IsAllFiles = true && !_ignores.Contains(file.Extension.ToLower())))
+                            if (_option.IsAllFiles == false)
                             {
                                 files.Add(new TextSearchResult() { FilePath = file.FullName, Title = file.Extension, Size = file.Length, LastDate = file.LastWriteTime });
+                            }
+                            else
+                            {
+                                //合并在一个if里无效，原因不明，可能是代码优化的问题
+                                if( _ignores.Contains(file.Extension.ToLower()) == false)
+                                    files.Add(new TextSearchResult() { FilePath = file.FullName, Title = file.Extension, Size = file.Length, LastDate = file.LastWriteTime });
                             }
                         }
                     }
