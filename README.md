@@ -42,7 +42,6 @@
 其他控件暂时用不上
 
 ## 依赖环境
-.net8 
-NuGet 引用了 System.Text.Encoding.CodePages
-原则上尽可能减少依赖， 但默认支持的编码太少，只能增加一个引用
+1. dotNet8
+2. NuGet 引用了 System.Text.Encoding.CodePages（原则上尽可能减少依赖， 但默认支持的编码太少，只能增加一个引用）
 
