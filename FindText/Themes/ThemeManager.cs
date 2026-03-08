@@ -8,8 +8,7 @@ namespace FindText.Themes
         添加颜色主题：
          1、复制Themes/LightTheme.xaml，重命名为 【新主题.xaml】
          2、修改【新主题.xaml】中的颜色值
-         3、在ThemeManager.cs 中登记新主题
-
+         3、在ThemeManager 和 ThemeCode 中登记新主题
      */
 
     public class ThemeManager

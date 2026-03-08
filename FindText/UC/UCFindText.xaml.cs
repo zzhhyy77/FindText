@@ -1,10 +1,14 @@
-﻿using System;
+﻿using FindText.Helpers;
+using FindText.Models;
+using FindText.Workers;
+using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,10 +17,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using FindText.Helpers;
-using FindText.Models;
-using FindText.Workers;
-using Microsoft.Win32;
 
 namespace FindText.UC
 {
@@ -32,17 +32,20 @@ namespace FindText.UC
 
         #endregion
 
+
         #region 字段
 
         CancellationTokenSource _cancelToken;
         bool _isbusying;
         string _lastTag;
-
-        ObservableCollection<TextSearchResult>? _listHistory;
+        ObservableCollection<TextSearchResult>? _listCaches;
         ObservableCollection<TextSearchResult>? _results;
 
         string _lastFolder;
         bool _isEventEnable;
+        int _curFlagType; //1 = 数据标签， 0 = 普通标签
+        bool _isModifying; // 绑定数据源是否正在修改
+        string _selNote; //进入编辑模式前的备注内容
 
         #endregion 字段
 
@@ -68,10 +71,12 @@ namespace FindText.UC
             _isbusying = false;
             _lastFolder = string.Empty;
             _isEventEnable = true;
+            _curFlagType = 0;
+            _isModifying = false;
 
             _results = new ObservableCollection<TextSearchResult>();
-            _listHistory = new ObservableCollection<TextSearchResult>();
-            listboxHistory.ItemsSource = _listHistory;
+            _listCaches = new ObservableCollection<TextSearchResult>();
+            listboxCache.ItemsSource = _listCaches;
 
             #region 手工排序,常用的放前面
 
@@ -110,8 +115,6 @@ namespace FindText.UC
 
         private void InitializeEvents()
         {
-            //DivHelp.MouseUp += DivHelp_MouseUp;
-
             buttonFind.Click += ButtonFind_Click;
             inputPattern.TextChanged += InputPattern_TextChanged;
             buttonSelectDir.Click += ButtonSelectDir_Click;
@@ -121,18 +124,24 @@ namespace FindText.UC
             buttonGetExtName.Unchecked += ButtonGetExtName_Unchecked;
 
             datagridResult.MouseDoubleClick += DatagridResult_MouseDoubleClick;
-            datagridResult.SelectionChanged += DatagridResult_SelectionChanged;            
+            datagridResult.SelectionChanged += DatagridResult_SelectionChanged;
 
             inputResultFilter.TextChanged += InputResultFilter_TextChanged;
             buttonOpenSelection.Click += ButtonOpenSelection_Click;
 
 
-            listboxHistory.MouseDoubleClick += ListboxHistory_MouseDoubleClick;
-            listboxHistory.SelectionChanged += ListboxHistory_SelectionChanged;
+            listboxCache.MouseDoubleClick += ListboxCache_MouseDoubleClick;
+            listboxCache.SelectionChanged += ListboxCache_SelectionChanged;
 
             buttonCloseExtPanel.Click += (s, e) => { buttonGetExtName.IsChecked = false; };
             buttonHelpClose.Click += (s, e) => { DivHelp.Visibility = Visibility.Collapsed; };
-        
+
+            msgSelectedInfo.MouseDoubleClick += (s1, e1) => { msgSelectedInfo.SelectAll(); };
+
+            buttonDataGridSaveAs.Click += ButtonDataGridSaveAs_Click;
+            buttonDataGridSave.Click += ButtonDataGridSave_Click;
+            buttonDataGridDelete.Click += ButtonDataGridDelete_Click;
+
         }
 
         #endregion 构造函数及初始化
@@ -142,51 +151,69 @@ namespace FindText.UC
 
         private async void ButtonFind_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(inputFolder.Text))
+            try
             {
-                PopupHelper.ShowPopupMessage(inputFolder, "请选择目标文件夹");
-                return;
-            }
+                if (string.IsNullOrEmpty(inputFolder.Text))
+                {
+                    PopupHelper.ShowPopupMessage(inputFolder, TextCache.Text["Err.FolderNull"]);
+                    return;
+                }
 
-            if (!Directory.Exists(inputFolder.Text))
+                if (!Directory.Exists(inputFolder.Text))
+                {
+                    PopupHelper.ShowPopupMessage(inputFolder, TextCache.Text["Err.NoFolder"]);
+                }
+
+                if (string.IsNullOrEmpty(inputPattern.Text))
+                {
+                    PopupHelper.ShowPopupMessage(inputPattern, TextCache.Text["Err.PatternNull"]);
+                    ShowHelpInfo("Pattern");
+                    return;
+                }
+
+                if (string.IsNullOrEmpty(inputSearchText.Text))
+                {
+                    PopupHelper.ShowPopupMessage(inputSearchText, TextCache.Text["Err.TextNull"]);
+                    return;
+                }
+
+                AppCache.Instance.Configs.SearchOption = GetSearchOptions();
+                string filename = AppConfigHelper.GetCacheFileName(inputSearchText.Text, AppCache.Instance.Configs.SearchOption.Path);      
+                if (_listCaches != null && _listCaches.Where(x => x.FilePath == filename).Any())
+                {
+                    if (MessageWnd.Show(TextCache.Text["MSG.Title"], string.Format(TextCache.Text["FT.Again"], inputSearchText.Text)) != true)
+                    {
+                        return;
+                    }
+                }
+
+                DivProgress.Visibility = Visibility.Visible;
+                DivHelp.Visibility = Visibility.Collapsed;
+                DivProgress.Visibility = Visibility.Visible;
+                progressBar1.IsIndeterminate = true;
+                textblockProgressInfo.Text = string.Empty;
+                buttonCancel.IsEnabled = true;
+
+
+                datagridResult.ItemsSource = null;
+
+                //var watch = new Stopwatch();
+                //watch.Start();
+
+                await SearchTextAsync();
+
+                //watch.Stop();
+                //msgSelectedInfo.Text = $"{watch.ElapsedMilliseconds}"; //测试3关键字搜索， 正则比indexof慢不少
+
+                buttonCancel.IsEnabled = false;
+                DivProgress.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
             {
-                PopupHelper.ShowPopupMessage(inputFolder, "文件夹不存在");
+                DivProgress.Visibility = Visibility.Collapsed;
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
             }
-
-            if (string.IsNullOrEmpty(inputPattern.Text))
-            {
-                PopupHelper.ShowPopupMessage(inputPattern, "请输入文件类型");
-                ShowHelpInfo("Pattern");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(inputSearchText.Text))
-            {
-                PopupHelper.ShowPopupMessage(inputSearchText, "请输入搜索内容");
-                return;
-            }
-
-            DivProgress.Visibility = Visibility.Visible;
-            DivHelp.Visibility = Visibility.Collapsed;
-            DivProgress.Visibility = Visibility.Visible;
-            progressBar1.IsIndeterminate = true;
-            textblockProgressInfo.Text = string.Empty;
-            buttonCancel.IsEnabled = true;
-
-            AppCache.Instance.Configs.SearchOption = GetSearchOptions();
-            _results = null;
-            datagridResult.ItemsSource = null;
-
-            var watch = new Stopwatch();
-            watch.Start();
-
-            await SearchTextAsync();
-
-            watch.Stop();
-            msgSelectedInfo.Text = $"{watch.ElapsedMilliseconds}"; //正则 比 indexof慢不少
-
-            buttonCancel.IsEnabled = false;
-            DivProgress.Visibility = Visibility.Collapsed;
         }
 
         private void InputPattern_TextChanged(object sender, TextChangedEventArgs e)
@@ -195,7 +222,6 @@ namespace FindText.UC
             {
                 if (DivIgnores.Visibility != Visibility.Visible)
                     DivIgnores.Visibility = Visibility.Visible;
-                //SetStoryboard(DivParams, 0.5, 1);
             }
             else
             {
@@ -207,9 +233,15 @@ namespace FindText.UC
         private void ButtonSelectDir_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new OpenFolderDialog();
+            dialog.InitialDirectory = inputFolder.Text;
             if (dialog.ShowDialog() == true)
             {
                 inputFolder.Text = dialog.FolderName;
+                DirectoryInfo? parent = Directory.GetParent(dialog.FolderName);
+                if (parent == null)
+                {
+                    PopupHelper.ShowPopupMessage(inputFolder, TextCache.Text["MSG.IsRoot"], 5);
+                }
             }
         }
 
@@ -218,34 +250,42 @@ namespace FindText.UC
             if (listboxExtNames.Items.Count <= 0)
                 return;
 
-            string str = string.Empty;
-            int i = 0;
-            bool frist = true;
-            foreach (SelectedValue item in listboxExtNames.ItemsSource)
+            try
             {
-                if (item == null)
-                    break;
-
-                if (i > 30)
-                    break;
-
-                if (item.IsSelected)
+                string str = string.Empty;
+                int i = 0;
+                bool frist = true;
+                foreach (SelectedValue item in listboxExtNames.ItemsSource)
                 {
-                    if (!frist)
-                        str += ",";
-                    str += $"*{item.Value}";
-                    frist = false;
-                }
-                i++;
-            }
+                    if (item == null)
+                        break;
 
-            if (string.IsNullOrEmpty(str))
-            {
-                inputIgnores.Text = string.Empty;
+                    if (i > 30)
+                        break;
+
+                    if (item.IsSelected)
+                    {
+                        if (!frist)
+                            str += ",";
+                        str += $"*{item.Value}";
+                        frist = false;
+                    }
+                    i++;
+                }
+
+                if (string.IsNullOrEmpty(str))
+                {
+                    inputIgnores.Text = string.Empty;
+                }
+                else
+                {
+                    inputIgnores.Text = str;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                inputIgnores.Text = str;
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
             }
         }
 
@@ -253,28 +293,31 @@ namespace FindText.UC
         {
             if (_lastFolder == inputFolder.Text)
                 return;
-
-            if (!string.IsNullOrEmpty(inputFolder.Text))
+            try
             {
-                _lastFolder = inputFolder.Text;
-                GetAllExtNames();
+                if (!string.IsNullOrEmpty(inputFolder.Text))
+                {
+                    _lastFolder = inputFolder.Text;
+                    GetAllExtNames();
+                }
             }
-        }
-
-        private void HelpCommandHandler(object sender, ExecutedRoutedEventArgs e)
-        {
-            ShowHelpInfo($"{e.Parameter}");
-        }
-
-        private void CanExecuteHandler(object sender, CanExecuteRoutedEventArgs e)
-        {
-            e.CanExecute = true;
+            catch (Exception ex)
+            {
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
+            }
         }
 
         private void DatagridResult_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
+            if (_curFlagType == 1)
+                return;
+
             TextSearchResult? sel = datagridResult.SelectedItem as TextSearchResult;
             if (sel == null)
+                return;
+
+            if (string.IsNullOrEmpty(sel.FilePath))
                 return;
 
             try
@@ -288,7 +331,6 @@ namespace FindText.UC
                         break;
 
                     case "Note":
-
                         break;
                 }
             }
@@ -301,30 +343,63 @@ namespace FindText.UC
 
         private void DatagridResult_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (datagridResult.SelectedItems == null || datagridResult.SelectedItems.Count <= 0)
+            if (_isModifying) return; //正在改数据源         
+            try
             {
-                DivOpenSel.Visibility = Visibility.Collapsed;
-                return;
-            }
+                foreach (TextSearchResult item in e.RemovedItems)
+                {
+                    item.IsSelected = false;
+                }
 
-            DivOpenSel.Visibility = Visibility.Visible;
+                foreach (TextSearchResult item in e.AddedItems)
+                {
+                    item.IsSelected = true;
+                }
 
-            if (datagridResult.SelectedItems.Count == 1)
-            {
-                TextSearchResult? sel = datagridResult.SelectedItem as TextSearchResult;
-                if (sel == null)
+                if (datagridResult.SelectedItems == null || datagridResult.SelectedItems.Count <= 0)
                 {
                     DivOpenSel.Visibility = Visibility.Collapsed;
+                    DivDataGridButtons.Visibility = Visibility.Collapsed; 
+
                     return;
                 }
 
-                msgSelectedInfo.Text = sel.FilePath;
-                buttonOpenSelection.Content = TextCache.Text["FT.OpenPath"];
+                TextSearchResult data = (TextSearchResult)datagridResult.SelectedItem;
+                if (_curFlagType == 1)
+                {
+                    msgSelectedInfo.Text = data.FilePath;
+                    return; //数据标签
+                }
+
+                DivOpenSel.Visibility = Visibility.Visible;
+                DivDataGridButtons.Visibility = Visibility.Visible;
+
+
+                _selNote = data.Note; //用于判断是否需要保存
+
+                if (datagridResult.SelectedItems.Count == 1)
+                {
+                    msgSelectedInfo.Text = data.FilePath;
+                    buttonOpenSelection.Content = TextCache.Text["DG.OpenPath"];
+                }
+                else
+                {
+                    msgSelectedInfo.Text = $"{TextCache.Text["FT.SelCount"]}{datagridResult.SelectedItems.Count}";
+                    buttonOpenSelection.Content = TextCache.Text["DG.OpenSel"];
+                }
+
+                switch ($"{datagridResult.CurrentCell.Column.SortMemberPath}")
+                {
+                    case "Note":
+                        datagridResult.BeginEdit();                    
+                        break;
+                }
+
             }
-            else
+            catch (Exception ex)
             {
-                msgSelectedInfo.Text = $"{TextCache.Text["FT.SelCount"]}{datagridResult.SelectedItems.Count}";
-                buttonOpenSelection.Content = TextCache.Text["FT.OpenSel"];
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
             }
         }
 
@@ -384,123 +459,279 @@ namespace FindText.UC
             }
         }
 
-        private void DivParams_MouseLeave(object sender, MouseEventArgs e)
-        {
-            SetStoryboard(DivParams, 1, 0.5);
-        }
-
-        private void DivParams_MouseEnter(object sender, MouseEventArgs e)
-        {
-            SetStoryboard(DivParams, 0.5, 1);
-        }
-
         private void InputResultFilter_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_results == null || _results.Count <= 0)
                 return;
 
-            if (string.IsNullOrEmpty(inputResultFilter.Text))
-            {
-                datagridResult.ItemsSource = null;
-                datagridResult.ItemsSource = _results;
-            }
-            else
-            {
-                datagridResult.ItemsSource = null;
-                string str = this.inputResultFilter.Text.ToLower();
-                datagridResult.ItemsSource = _results.Where(x => x.FilePath.ToLower().IndexOf(str, StringComparison.OrdinalIgnoreCase) >= 0);
-            }
-        }
-
-        private void ListboxHistory_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isEventEnable == false)
-                return;
-
-            if (listboxHistory.SelectedItems.Count <= 0)
-            {
-                return;
-            }
-
-            TextSearchResult? fr = listboxHistory.SelectedItem as TextSearchResult;
-            if (fr == null)
-                return;
-
-            if (fr.FilePath.IndexOf("Data_") > 0 && fr.FilePath.IndexOf("(cache") > 0)
-            {
-                buttonOpenSelection.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                buttonOpenSelection.Visibility = Visibility.Visible;
-            }
-
-            byte[] data = File.ReadAllBytes(fr.FilePath);
-
-            if (data == null)
-                return;
-
-            string json = string.Empty;
             try
             {
-                json = Utils.StringCompress.Decompress(data);
+                if (string.IsNullOrEmpty(inputResultFilter.Text))
+                {
+                    datagridResult.ItemsSource = null;
+                    datagridResult.ItemsSource = _results;
+                }
+                else
+                {
+                    datagridResult.ItemsSource = null;
+                    string str = this.inputResultFilter.Text.ToLower();
+                    datagridResult.ItemsSource = _results.Where(x => x.FilePath.ToLower().IndexOf(str, StringComparison.OrdinalIgnoreCase) >= 0);
+                }
             }
             catch { }
-
-            _results = null;
-            _results = JsonHelper.Parse<ObservableCollection<TextSearchResult>>(json);
-            inputResultFilter.Clear();
-            datagridResult.ItemsSource = _results;
         }
 
-        private void ListboxHistory_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void ListboxCache_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (listboxHistory.SelectedItem == null)
+            if (listboxCache.SelectedItems.Count <= 0)
                 return;
 
-            TextSearchResult? fr = listboxHistory.SelectedItem as TextSearchResult;
+            try
+            {
+                buttonDataGridSave.IsEnabled = false;
+                TextSearchResult? fr = listboxCache.SelectedItem as TextSearchResult;
+                if (fr == null)
+                    return;
+
+                if (fr.FilePath.IndexOf("data_", StringComparison.InvariantCultureIgnoreCase) >= 0 && fr.FilePath.IndexOf("(cache", StringComparison.InvariantCultureIgnoreCase) > 0)
+                {
+                    DivOpenSel.Visibility = Visibility.Collapsed;
+                    DivDataGridButtons.Visibility = Visibility.Collapsed; 
+                    _curFlagType = 1;
+                }
+                else
+                {
+                    DivOpenSel.Visibility = Visibility.Visible;
+                    DivDataGridButtons.Visibility = Visibility.Visible;
+                    _curFlagType = 0;
+                }
+
+                if (_isEventEnable == false) //保存缓存的过程中为false
+                    return;
+
+                byte[] data = File.ReadAllBytes(fr.FilePath);
+
+                if (data == null)
+                    return;
+
+                string json = string.Empty;
+                try
+                {
+                    json = Utils.StringCompress.Decompress(data);
+                }
+                catch { }
+
+                _results = null;
+                _results = JsonHelper.Parse<ObservableCollection<TextSearchResult>>(json);
+                inputResultFilter.Clear();
+                datagridResult.ItemsSource = _results;
+            }
+            catch (Exception ex)
+            {
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
+            }
+        }
+
+        //逻辑不合理，已取消
+        private void ListboxCache_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            /*
+            重新搜相同内容应手工收入，且给个提示，不应该提供方便
+
+            if (_curFlagType == 1)
+                return;
+
+            if (listboxCache.SelectedItem == null)
+                return;
+
+            TextSearchResult? fr = listboxCache.SelectedItem as TextSearchResult;
             if (fr == null)
                 return;
 
-            inputSearchText.Text = fr.Title;
+            try
+            {
+                inputSearchText.Text = fr.Title;
+            }
+            catch (Exception ex)
+            {
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
+            }
+            */
         }
 
-        //在Xaml绑定的事件
+        private void ButtonDataGridSaveAs_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var sel = listboxCache.SelectedItem as TextSearchResult;
+                if (sel == null) return;
+                if (_results == null || _results.Count <= 0) return;
+                if (string.IsNullOrEmpty(sel.FilePath)) return;
+                if (!File.Exists(sel.FilePath)) return;
+                if (string.IsNullOrEmpty(sel.Title)) return;
+
+                string? dir = Path.GetDirectoryName(sel.FilePath);
+                string newName = $"{dir}\\Data_{sel.Title}_(Cache).cache";
+
+                if (MessageWnd.Show(TextCache.Text["MSG.Title"], TextCache.Text["MSG.SaveAs"]) == true)
+                {
+                    File.Move(sel.FilePath, newName);
+                    LoadCaches();
+                }
+            }
+            catch(Exception ex)
+            {
+                PopupHelper.ShowPopupMessage((Button)sender,ex.Message);
+            }
+        }
+
+        private void ButtonDataGridSave_Click(object sender, RoutedEventArgs e)
+        {
+            var sel = listboxCache.SelectedItem as TextSearchResult;
+            if (sel == null) return;
+
+            SaveResult(sel.Title, sel.FilePath);
+            buttonDataGridSave.IsEnabled = false;
+
+        }
+
+        private void ButtonDataGridDelete_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                //先切换到备注列，避免执行双击动作
+                DataGridCellInfo dci = new DataGridCellInfo(datagridResult.CurrentCell, this.ColumnNote);
+                datagridResult.CurrentCell = dci;
+
+                if (datagridResult.SelectedItems == null)
+                    return;
+
+                int index = datagridResult.SelectedIndex;
+
+                _isModifying = true;
+
+                for (int i = datagridResult.SelectedItems.Count - 1; i >= 0; i--)
+                {
+                    _results.Remove((TextSearchResult)datagridResult.SelectedItems[i]);
+                }
+                _isModifying = false;
+
+                if (_results.Count <= 0)
+                {
+                    DivDataGridButtons.Visibility = Visibility.Collapsed;
+                    buttonDataGridSave.IsEnabled = false; 
+
+                }
+                else
+                {
+                    buttonDataGridSave.IsEnabled = true; //只一个按钮需要控制状态，没必要用Command消耗性能
+                    if (_results.Count> index)
+                        datagridResult.SelectedIndex = index;
+                    else
+                        datagridResult.SelectedIndex = _results.Count-1;
+
+                }
+
+            }
+            catch { }
+        }
+
+        //Xaml绑定的事件
         private void ListItemButton_Click(object sender, RoutedEventArgs e)
         {
-            TextSearchResult? fr = ((Button)sender).Tag as TextSearchResult;
-            if (fr == null)
-                return;
-
-            if (fr.FilePath.IndexOf("Data_") > 0 && fr.FilePath.IndexOf("(cache)") > 0)
+            try
             {
-                return;
-            }
+                TextSearchResult? fr = ((Button)sender).Tag as TextSearchResult;
+                if (fr == null)
+                    return;
 
-            Button buttonOK = new Button();
-            buttonOK.Content = "❌";
-            buttonOK.FontSize = 16;
-            buttonOK.Width = 48;
-            buttonOK.Height = 26;
-            buttonOK.Padding = new Thickness(0);
-            buttonOK.Margin = new Thickness(0);
-            //buttonOK.Style = App.Current.Resources["ellipseButtonStyle"] as Style;
-            buttonOK.Foreground = App.Current.Resources["RedBrush"] as SolidColorBrush;
-            buttonOK.Background = App.Current.Resources["TransparentBrush"] as SolidColorBrush;
-            buttonOK.Click += (ss, ee) =>
-            {
-                if (File.Exists(fr.FilePath))
+                if (fr.FilePath.IndexOf("Data_") > 0 && fr.FilePath.IndexOf("(cache)") > 0)
                 {
-                    File.Delete(fr.FilePath);
-                    _listHistory?.Remove(fr);
+                    return;
                 }
-            };
-            PopupHelper.ShowPopupMessage((Button)sender, buttonOK, 2);
+
+                int idx = listboxCache.SelectedIndex;
+                Button buttonOK = new Button();
+                buttonOK.Content = "❌";
+                buttonOK.FontSize = 16;
+                buttonOK.Width = 48;
+                buttonOK.Height = 26;
+                buttonOK.Padding = new Thickness(0);
+                buttonOK.Margin = new Thickness(0);
+                //buttonOK.Style = App.Current.Resources["ellipseButtonStyle"] as Style;
+                buttonOK.Foreground = App.Current.Resources["RedBrush"] as SolidColorBrush;
+                buttonOK.Background = App.Current.Resources["TransparentBrush"] as SolidColorBrush;
+                buttonOK.Click += (ss, ee) =>
+                {
+                    if (File.Exists(fr.FilePath))
+                    {
+                        File.Delete(fr.FilePath);
+                        _listCaches?.Remove(fr);
+                        _results?.Clear();
+                        if(idx>=0)
+                            listboxCache.SelectedIndex = (idx - 1);
+                    }
+                };
+                PopupHelper.ShowPopupMessage((Button)sender, buttonOK, 2);
+            }
+            catch (Exception ex)
+            {
+                DivHelp.Visibility = Visibility.Visible;
+                textHelp.Text = ex.Message;
+            }
+        }
+
+        private void editboxNote_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (buttonDataGridSave.IsEnabled)
+                return;
+
+            TextBox? tb = sender as TextBox;
+            if (tb == null)
+                return;
+
+            if ($"{_selNote}" != $"{tb.Text}")
+                buttonDataGridSave.IsEnabled = true;
+            else
+                buttonDataGridSave.IsEnabled = false;
         }
 
 
         #endregion 事件处理
 
+        #region Commands
+
+        //全局命令
+        private void HelpCommandHandler(object sender, ExecutedRoutedEventArgs e)
+        {
+            ShowHelpInfo($"{e.Parameter}");
+        }
+
+        private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e)
+        {
+            try
+            {
+                switch ($"{e.Parameter}")
+                {
+                    case "Cache":
+                        OpenToolWindow();
+                        break;
+                    case "Reload":
+                        LoadCaches();
+                        break;                       
+                }
+            }
+            catch { }
+        }
+
+        private void CanExecuteHandler(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = true;
+        }
+
+        #endregion
 
         #region 方法
 
@@ -577,7 +808,7 @@ namespace FindText.UC
         private void SetStoryboard(UIElement element, double from, double to)
         {
             try
-            {
+            {               
                 if (element.Opacity == to)
                     return;
 
@@ -626,7 +857,7 @@ namespace FindText.UC
 
             string[] defaultIgnores = AppCache.Instance.DefaultIgnores.Replace(" ", string.Empty).Split(AppCache.SeparatorComma, StringSplitOptions.RemoveEmptyEntries);
 
-            List<string> ignores = new List<string>(ignoreStr.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries));
+            List<string> ignores = ignoreStr.Split(AppCache.SeparatorComma, StringSplitOptions.RemoveEmptyEntries).ToList();
 
             DirectoryInfo di = new DirectoryInfo(folderPath);
 
@@ -724,8 +955,11 @@ namespace FindText.UC
 
         private void LoadCaches()
         {
-            listboxHistory.ItemsSource = null;
-            _listHistory.Clear();
+            _isEventEnable = false;
+            listboxCache.ItemsSource = null; 
+            _listCaches.Clear();
+            _results.Clear(); 
+
             int maxsize = 10 * 1024 * 1024; //超过10M的忽略
             int maxCount = 20; //最多只载入20个
 
@@ -734,6 +968,9 @@ namespace FindText.UC
             {
                 string dir = AppConfigHelper.GetLocalFolder("Cache");
                 List<TextSearchResult> files = GetAllFilesEx(dir, "*.cache", maxsize);
+
+                //用Position 区分标签类别 ，0 = 查找结果，1 = 标签数据
+                //标签数据放前面，数据量小，用两次循环影响不大
                 foreach (var file in files)
                 {
                     string filename = Path.GetFileName(file.FilePath).Trim();
@@ -743,7 +980,7 @@ namespace FindText.UC
                     string[] buf = filename.Split('_');
                     if (buf.Length >= 3)
                     {
-                        Application.Current.Dispatcher.Invoke(() => _listHistory.Add(new TextSearchResult() { Title = buf[1], FilePath = file.FilePath, Position = 1 }));
+                        Application.Current.Dispatcher.Invoke(() => _listCaches.Add(new TextSearchResult() { Title = buf[1], FilePath = file.FilePath, Position = 1 }));
                     }
                     if (maxCount <= 0)
                         break;
@@ -759,7 +996,7 @@ namespace FindText.UC
                     string[] buf = str.Split('_');
                     if (buf.Length >= 3)
                     {
-                        Application.Current.Dispatcher.Invoke(() => _listHistory.Add(new TextSearchResult() { Title = buf[1], FilePath = item.FilePath }));
+                        Application.Current.Dispatcher.Invoke(() => _listCaches.Add(new TextSearchResult() { Title = buf[1], FilePath = item.FilePath }));
                     }
                     maxCount--;
                     if (maxCount <= 0)
@@ -769,46 +1006,65 @@ namespace FindText.UC
 
             bw.RunWorkerCompleted += (s1, e1) =>
             {
+                _isEventEnable = true;
                 if (e1.Error != null)
                 {
 
                 }
                 else
                 {
-                    listboxHistory.ItemsSource = _listHistory;
+                    listboxCache.ItemsSource = _listCaches;
                 }
             };
             bw.RunWorkerAsync();
         }
 
-        private void SaveResult()
+        private void SaveResult(string title,string fileName = "")
         {
+
+            /*
+            提取到 AppConfigHelper.GetCacheFileName
             string dir = AppConfigHelper.GetLocalFolder("Cache");
-            string folder = AppCache.Instance.Configs.SearchOption.Path.Replace(":\\", "：＼");
-            folder = folder.Replace("\\", "＼");
+            string folder = AppCache.Instance.Configs.SearchOption.Path.Replace(":\\", "-");
+            folder = folder.Replace("\\", "-");
+
+            if (title.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                string guid = Guid.NewGuid().ToString("N");
+                guid = guid.Substring(0, 16);
+                title = $"{guid}";
+            }
+            string name = fileName;
+
+            if (string.IsNullOrEmpty(name))
+                name = $"{dir}\\Result_{title}_({folder}).cache";
+            */
+
+            string name = fileName;
+            if (string.IsNullOrEmpty(name))
+                name = AppConfigHelper.GetCacheFileName(title,AppCache.Instance.Configs.SearchOption.Path);
 
             string json = JsonHelper.ToJson(_results);
-
             byte[] data = Utils.StringCompress.Compress(json);
-            string title = AppCache.Instance.Configs.SearchOption.SearchText.Replace("\\", "＼");
-            string filename = $"{dir}\\Result_{title}_({folder}).cache";
+            //string title = AppCache.Instance.Configs.SearchOption.SearchText;
 
-            File.WriteAllBytes(filename, data);
+
+            File.WriteAllBytes(name, data);
 
             //AppConfigHelper.SaveConfig("Cache", filename, json);
 
-            var item = _listHistory.Where(x => x.Title == title);
+            var item = _listCaches.Where(x => x.FilePath == name);
             if (item.Any())
             {
-                listboxHistory.SelectedItem = item.First();
+                listboxCache.SelectedItem = item.First();
             }
             else
             {
-                int idx = _listHistory.Where(x=>x.Position==1).Count() ;
-                TextSearchResult sr = new TextSearchResult() { Title = title, FilePath = $"{filename}" };
-                _listHistory?.Insert(idx,sr);
+                int idx = _listCaches.Where(x => x.Position == 1).Count();
+                TextSearchResult sr = new TextSearchResult() { Title = title, FilePath = $"{name}" };
+                _listCaches?.Insert(idx, sr);
                 _isEventEnable = false;
-                listboxHistory.SelectedItem = sr;
+                listboxCache.SelectedItem = sr;
                 _isEventEnable = true;
             }
         }
@@ -818,8 +1074,11 @@ namespace FindText.UC
             _lastTag = string.Empty;
             _cancelToken = new CancellationTokenSource();
             _isbusying = true;
-            List<TextSearchResult> results = new List<TextSearchResult>();
 
+            var notes = _results?.Where(x=>!string.IsNullOrEmpty(x.Note)); //缓存备注，以免重新搜索丢缓存
+
+            _results = null;
+            List<TextSearchResult> results = new List<TextSearchResult>();
             WorkerBase worker = new TextSearchWorker(AppCache.Instance.Configs.SearchOption);
 
             //这么写看起来别扭，但在Completed里绑定不能实时显示结果列表
@@ -850,7 +1109,27 @@ namespace FindText.UC
             worker.Completed += (object rev) =>
             {
                 if (_results.Count > 0)
-                    SaveResult();
+                {
+                    //搜索完后填回备注
+                    if (notes != null && notes.Any())
+                    {
+                        foreach (var tsr in _results)
+                        {
+                            foreach (var item in notes)
+                            {
+                                if (tsr.FilePath == item.FilePath)
+                                {
+                                    tsr.Note = item.Note;
+                                }
+                            }
+                        }
+                    }
+
+                    if(checkBoxRegex.IsChecked==false) //正则不自动清空
+                        inputSearchText.Text = string.Empty;
+
+                    SaveResult(AppCache.Instance.Configs.SearchOption.SearchText,string.Empty);
+                }
             };
 
             worker.ErrorOccurred += ex =>
@@ -867,7 +1146,8 @@ namespace FindText.UC
                 PopupHelper.ShowPopupMessage(inputSearchText, TextCache.Text["Task.Canceled"]);
 
                 if (_results.Count > 0)
-                    SaveResult();
+                    SaveResult(AppCache.Instance.Configs.SearchOption.SearchText, string.Empty); 
+
             };
 
             try
@@ -892,6 +1172,28 @@ namespace FindText.UC
             }
         }
 
+        private void OpenToolWindow()
+        {
+
+            Window wnd = new Window();
+            wnd.Owner = Application.Current.MainWindow;
+            wnd.Height = Application.Current.MainWindow.Height;
+            wnd.Width = Application.Current.MainWindow.Width;
+            wnd.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            wnd.Title = $"{TextCache.Text["Main.Title"]} - {TextCache.Text["Tool.ToolsWnd"]}";
+            UCTools uc = new UCTools();
+            wnd.Content = uc;
+            wnd.Closed += (s1, e1) =>
+            {
+                if (uc.CacheChanged)
+                {
+                    LoadCaches();
+                }
+            };
+            wnd.ShowDialog();
+        }
+
+     
 
         #endregion 方法
 

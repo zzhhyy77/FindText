@@ -10,6 +10,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <!--<ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/themes/Fluent.xaml" />-->                
                 <ResourceDictionary Source="/Assets/Converts.xaml"/>
+                <ResourceDictionary Source="/Assets/Strings.xaml"/>
 
                 <!-- 主题资源必须放在最后面 -->
                 <ResourceDictionary Source="/Themes/DarkTheme.xaml"/>

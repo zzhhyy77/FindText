@@ -3,10 +3,10 @@
 namespace FindText.LocalControls
 {
 
-    public class TabControlHelper
+    public class TabControlDP
     {
         public static readonly DependencyProperty TabsDisabledProperty =
-            DependencyProperty.RegisterAttached("TabsDisabled", typeof(bool), typeof(TabControlHelper), new UIPropertyMetadata(false));
+            DependencyProperty.RegisterAttached("TabsDisabled", typeof(bool), typeof(TabControlDP), new UIPropertyMetadata(false));
 
         public static bool GetTabsDisabled(DependencyObject obj)
         {

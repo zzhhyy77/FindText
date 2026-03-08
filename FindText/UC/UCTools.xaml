@@ -4,11 +4,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:FindText.UC"
+             xmlns:app="clr-namespace:FindText"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Grid Background="{DynamicResource BackgroundBrush}">
+    <Grid Background="{DynamicResource BackgroundBrush}" DataContext="{x:Static app:TextCache.Text}">
         <TabControl>
-            <TabItem Header="创建数据标签" Width="120" Height="28">
+            <TabItem Header="{Binding [WT.New]}" Width="120" Height="28">
                 <Grid>
 
                     <Grid.RowDefinitions>
@@ -22,27 +23,46 @@
                         <ColumnDefinition Width="90*"/>
                         <ColumnDefinition Width="8"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="标签名：" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding [WT.Label]}" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" />
 
                     <StackPanel  Orientation="Horizontal"  Grid.Column="1">
                         <TextBox x:Name="textboxTitle" Text="" Width="150" Height="26" Margin="3,0,0,0" />
-                        <Button x:Name="buttonSaveCache" Content="保存为标签文件" Margin="8,0,0,0" />
-                        
+                        <Button x:Name="buttonSaveCache" Content="{Binding [CM.Save]}" Margin="8,0,0,0" Width="80" />
+
                     </StackPanel>
 
-                    <TextBlock Text="内容：" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,0,0" />
+                    <TextBlock Text="{Binding [WT.Content]}" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,0,0" />
 
                     <TextBox x:Name="textboxInput" Grid.Row="1" Grid.Column="1" HorizontalContentAlignment="Left" Margin="3" BorderThickness="1"
                              VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AcceptsReturn="True"  AcceptsTab="True" />
                 </Grid>
             </TabItem>
 
-            <TabItem Header="打开缓存文件" Width="120" Height="28">
-                
-            </TabItem>
-            
-        </TabControl>
+            <TabItem Header="{Binding [WT.CacheMgr]}" Width="120" Height="28"   >
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="32"/>
+                        <RowDefinition Height="90*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" >
+                        <!--<TextBlock Text="  把缓存文件转为Json格式" Foreground="{DynamicResource ForegroundBrush2}" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,0,0" />-->
+                        <Button x:Name="buttonOpenCache" Content="{Binding [WT.OpenCache]}" Width="120" />
 
+                        <TextBox x:Name="textboxConvertTitle" Text="" Width="150" Height="26" Margin="16,0,0,0" />
+
+                        <Button x:Name="buttonConvertCache" Content="{Binding [WT.Convert]}" Margin="10,0,0,0" Width="120"  />
+
+                        <Button x:Name="buttonOpenCacheFolder" Content="{Binding [Tool.CacheDir]}" Margin="10,0,0,0" Width="120"  />
+
+                    </StackPanel>
+
+                    <TextBox x:Name="textboxJson"  Grid.Row="1" AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap" 
+                             VerticalContentAlignment="Top" Padding="3" Text=""
+                             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" />
+
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 
 </UserControl>

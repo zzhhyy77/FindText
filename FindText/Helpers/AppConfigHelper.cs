@@ -62,7 +62,34 @@ namespace FindText.Helpers
             return string.Empty;
         }
 
-    
+        /// <param name="title"></param>
+        /// <param name="folder">如果为空，视为数据标签</param>
+        /// <returns></returns>
+        internal static string GetCacheFileName(string title, string folde1r)
+        {
+            string dir = AppConfigHelper.GetLocalFolder("Cache");
+            string path = AppCache.Instance.Configs.SearchOption.Path.Replace(":\\", "-");
+            path = path.Replace("\\", "-");
+
+            if (title.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                string guid = Guid.NewGuid().ToString("N");
+                guid = guid.Substring(0, 16);
+                title = $"{guid}";            
+            }
+            if (string.IsNullOrEmpty(path))
+            {
+                return $"{dir}\\Data_{title}_(Cache).cache";
+            }
+            else
+            {
+                if (Directory.Exists(dir))
+                    return $"{dir}\\Result_{title}_({path}).cache";
+                else
+                    throw new FileNotFoundException(folde1r);
+
+            }
+        }
 
 
     }

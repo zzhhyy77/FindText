@@ -50,7 +50,10 @@ namespace FindText.UC
             inputDatetime.TextChanged += InputDatetime_TextChanged;
 
             buttonToolsWnd.Click += ButtonToolsWnd_Click;
+
+            buttonOpenLocal.Click += ButtonOpenLocal_Click;
         }
+
 
         #region 事件处理
 
@@ -157,20 +160,15 @@ namespace FindText.UC
             }
         }
 
+        private void ButtonOpenLocal_Click(object sender, RoutedEventArgs e)
+        {
+            string path = AppConfigHelper.GetLocalFolder("Cache");
+            Win32Helper.OpenFileWithShell(path);
+        }
+
         private void ButtonToolsWnd_Click(object sender, RoutedEventArgs e)
         {
-            Window wnd = new Window();
-            wnd.Owner = Application.Current.MainWindow;
-            wnd.Height = Application.Current.MainWindow.Height;
-            wnd.Width = Application.Current.MainWindow.Width;
-            wnd.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            wnd.Content = new UCTools();
-            wnd.Closed += (s1, e1) =>
-            {
-                
-            };
-            wnd.ShowDialog();
-
+            
         }
 
 

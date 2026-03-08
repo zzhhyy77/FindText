@@ -1,0 +1,56 @@
+﻿<Window x:Class="FindText.UC.MessageWnd"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:app="clr-namespace:FindText"
+        xmlns:local="clr-namespace:FindText.UC"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        mc:Ignorable="d"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        AllowsTransparency="True"
+        Title="MessageWnd" Height="248" Width="400">
+
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource Brush03}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="14" />
+        </Style>
+
+    </Window.Resources>
+
+    <Border BorderThickness="2" BorderBrush="{DynamicResource BorderBrush}">
+        <Grid Background="{DynamicResource BackgroundBrush}" DataContext="{x:Static app:TextCache.Text}"  >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="90*"/>
+                <RowDefinition Height="32"/>
+            </Grid.RowDefinitions>
+            <Grid  Background="{DynamicResource BackgroundBrush2}"  >
+
+            </Grid>
+            <TextBlock x:Name="textblockTitle" Grid.Row="0" Text="Title" VerticalAlignment="Center" Foreground="{DynamicResource Brush03}" HorizontalAlignment="Left" FontSize="16" Margin="16,0,0,0" TextWrapping="Wrap"  />
+
+            <TextBox x:Name="textblockMsg" Grid.Row="1" Text="MSG" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" FontSize="14" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Padding="8" />
+
+            <Grid Background="{DynamicResource BackgroundBrush2}" Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40*" />
+                    <ColumnDefinition Width="10*" />
+                    <ColumnDefinition Width="40*" />
+                </Grid.ColumnDefinitions>
+
+                <Button x:Name="OkButton" Content="{Binding [CM.OK]}" Grid.Column="0" Width="80" Background="Transparent" HorizontalAlignment="Right" Click="OkButton_Click" />
+
+                <Button x:Name="CancelButton" Content="{Binding [CM.Cancel]}" Grid.Column="2" Width="80" Background="Transparent"  HorizontalAlignment="Left" Click="CancelButton_Click"  />
+
+
+            </Grid>
+
+        </Grid>
+    </Border>
+
+</Window>

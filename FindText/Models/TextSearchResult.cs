@@ -2,7 +2,7 @@
 
 namespace FindText.Models
 {
-    public class TextSearchResult: VModelsBase
+    public class TextSearchResult : VModelsBase
     {
         string _filePath;
         string _title;
@@ -11,7 +11,12 @@ namespace FindText.Models
         int _position;
         DateTime? _lastData;
         string _note;
+        bool _isSelected;
 
+        public TextSearchResult()
+        {
+            _isSelected = false;
+        }
 
         public string Title
         {
@@ -111,6 +116,21 @@ namespace FindText.Models
             }
 
         }
-    }
+        
 
+        public bool IsSelected
+        {
+            get
+            {
+                return this._isSelected;
+            }
+            set
+            {
+                this._isSelected = value;
+                RaisePropertyChanged();
+            }
+
+        }
+
+    }
 }

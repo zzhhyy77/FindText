@@ -4,18 +4,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Text;
 
 namespace FindText
 {
-
     /// <summary>
-    /// 多语言支持
+    /// 此方案效果一般，还是应改为 资源文件 + 转Json工具类 的方案
     /// </summary>
     internal class TextCache : VModelsBase
     {
         Dictionary<string, int> _index;
-        volatile static TextCache _instance = null;
+        volatile static TextCache _instance;
         static readonly object locker = new object();
         static ObservableCollection<KeyValue> _appText;
 
@@ -78,7 +76,7 @@ namespace FindText
                 if (File.Exists(path))
                 {
                     string str = File.ReadAllText(path);
-                    ObservableCollection<KeyValue> list = JsonHelper.Parse<ObservableCollection<KeyValue>>(str);
+                    ObservableCollection<KeyValue>? list = JsonHelper.Parse<ObservableCollection<KeyValue>>(str);
                     if (list != null)
                     {
                         foreach (var app in _appText)
@@ -96,7 +94,7 @@ namespace FindText
                 }
                 else
                 {
-                    throw new Exception(Text["Common.NoLangFile"]);
+                    throw new Exception(Text["CM.NoLangFile"]);
                 }
             }
             catch
@@ -155,7 +153,14 @@ namespace FindText
         private void InitializeText()
         {
             _appText = new ObservableCollection<KeyValue>();
-            _appText.Add(KeyValue.New("Common.NoLangFile", "没有相关的语言配置文件"));
+
+            _appText.Add(KeyValue.New("CM.NoLangFile", "没有相关的语言配置文件"));
+            _appText.Add(KeyValue.New("CM.Save", "保存"));
+            _appText.Add(KeyValue.New("CM.OK", "确定"));
+            _appText.Add(KeyValue.New("CM.Cancel", "取消"));
+            _appText.Add(KeyValue.New("CM.Close", "关闭"));
+            _appText.Add(KeyValue.New("CM.Refresh", "刷新"));
+            _appText.Add(KeyValue.New("CM.Completed", "已完成"));
 
             _appText.Add(KeyValue.New("App.Dark", "深色"));
             _appText.Add(KeyValue.New("App.Light", "浅色"));
@@ -169,7 +174,8 @@ namespace FindText
             _appText.Add(KeyValue.New("Tool.UnixLabel", "Unix时间戳："));
             _appText.Add(KeyValue.New("Tool.DateLabel", "日期格式："));
             _appText.Add(KeyValue.New("Tool.UnixError", "无效值"));
-            _appText.Add(KeyValue.New("Tool.ToolsWnd", "工    具"));
+            _appText.Add(KeyValue.New("Tool.CacheDir", "缓存文件夹"));
+            _appText.Add(KeyValue.New("Tool.ToolsWnd", "工 具"));
 
             //UCFindText
             _appText.Add(KeyValue.New("FT.MaxSizeLabel", "忽略 "));
@@ -180,19 +186,19 @@ namespace FindText
             _appText.Add(KeyValue.New("FT.Ignore", "忽略错误"));
             _appText.Add(KeyValue.New("FT.Date", "日期："));
             _appText.Add(KeyValue.New("FT.Regex", "正则表达式"));
-
-
-            _appText.Add(KeyValue.New("FT.ColPath", "路径"));
-            _appText.Add(KeyValue.New("FT.ColPosition", "位置"));
-            _appText.Add(KeyValue.New("FT.ColSize", "大小 (KB)"));
-            _appText.Add(KeyValue.New("FT.ColPreview", "预览"));
-            _appText.Add(KeyValue.New("FT.ColNote", "📝  备注"));
-            _appText.Add(KeyValue.New("FT.GridFind", "在结果中查找..."));
-            _appText.Add(KeyValue.New("FT.OpenPath", "打开所在文件夹"));
-            _appText.Add(KeyValue.New("FT.OpenSel", "打开所选项"));
-
             _appText.Add(KeyValue.New("FT.Total", "共找到："));
-            _appText.Add(KeyValue.New("FT.Total", "共找到："));
+            _appText.Add(KeyValue.New("FT.SelCount", "已选中："));
+            _appText.Add(KeyValue.New("FT.Again", "缓存中已经有【{0}】\r\n是否要重新查找，并覆盖上次结果？"));
+
+            //DataGrid
+            _appText.Add(KeyValue.New("DG.Path", "路径"));
+            _appText.Add(KeyValue.New("DG.Position", "位置"));
+            _appText.Add(KeyValue.New("DG.Size", "大小 (KB)"));
+            _appText.Add(KeyValue.New("DG.Preview", "预览"));
+            _appText.Add(KeyValue.New("DG.Note", "📝  备注"));
+            _appText.Add(KeyValue.New("DG.Find", "筛选..."));
+            _appText.Add(KeyValue.New("DG.OpenPath", "打开所在文件夹"));
+            _appText.Add(KeyValue.New("DG.OpenSel", "打开所选项"));
 
             //SearchTextWorker
             _appText.Add(KeyValue.New("Task.Canceled", "任务已取消"));
@@ -204,8 +210,10 @@ namespace FindText
             _appText.Add(KeyValue.New("WM.Search", "查找内容..."));
 
             //错误消息
-            _appText.Add(KeyValue.New("Err.Folder", "请选择目标文件夹"));
+            _appText.Add(KeyValue.New("Err.FolderNull", "请选择目标文件夹"));
             _appText.Add(KeyValue.New("Err.NoFolder", "文件夹不存在"));
+            _appText.Add(KeyValue.New("Err.PatternNull", "请输入文件类型"));
+            _appText.Add(KeyValue.New("Err.TextNull", "请输入搜索内容"));
 
             //常用编码
             _appText.Add(KeyValue.New("BM.Auto", "自动判断"));
@@ -214,10 +222,24 @@ namespace FindText
 
             //各种消息
             _appText.Add(KeyValue.New("MSG.MaxCount", "为避免误操作，\r\n一次最多只能同时打开30个文件，\r\n多文件请分批打开"));
-            _appText.Add(KeyValue.New("MSG.MsgCount", $"选中文件较多\r\n确定要同时打开吗？"));
+            _appText.Add(KeyValue.New("MSG.MsgCount", "选中文件较多\r\n确定要同时打开吗？"));
             _appText.Add(KeyValue.New("MSG.OK", "选中文件较多\r\n确定要同时打开吗？"));
-            _appText.Add(KeyValue.New("MSG.Title", "消息框.."));
+            _appText.Add(KeyValue.New("MSG.Title", "消息框..."));
             _appText.Add(KeyValue.New("MSG.Del", "确认删除"));
+            _appText.Add(KeyValue.New("MSG.IsRoot", "所选为根目录\r\n在根目录查找可能较为耗时，\r\n建议选择具体的目录"));
+            _appText.Add(KeyValue.New("MSG.SaveAs", "将当前数据转换为数据标签，转换后不可在程序里修改，\r\n但可在【Cache】文件夹删除或改名为普通数据，\r\n是否要转换？"));
+
+            //工具窗口
+            _appText.Add(KeyValue.New("WT.New", "创建数据标签"));
+            _appText.Add(KeyValue.New("WT.Label", "标签名："));
+            _appText.Add(KeyValue.New("WT.Content", "内容："));
+            _appText.Add(KeyValue.New("WT.TitleNull", "请输入文件标题"));
+            _appText.Add(KeyValue.New("WT.TextNull", "请输入内容"));
+            _appText.Add(KeyValue.New("WT.CacheMgr", "缓存 <-> Json"));
+            _appText.Add(KeyValue.New("WT.OpenCache", "缓存->Json"));
+            _appText.Add(KeyValue.New("WT.Convert", "Json->缓存"));
+            _appText.Add(KeyValue.New("WT.JsonError", "无效Json文件"));
+            _appText.Add(KeyValue.New("WT.TitleError", "无效标题（不能包括\\/?*等字符）"));
 
             InitializeHelpInfo();
         }
@@ -233,37 +255,32 @@ namespace FindText
     *.lua : 搜索所有lua文件
     abc*.txt : 搜索所有以abc开头的txt文件
 
-* 或 *.* 代表搜索所有符合大小的文件 （可网上搜索 【文件通配符】了解详情）
+* 或 *.* 代表搜索所有符合大小的文件
 
-注：即使使用了*.*等全文件通配符，程序会也自动忽略常见的图像，视频，压缩包等类型的文件。
-"));
+注：即使使用了*.*等全文件通配符，程序会也自动忽略常见图像，视频，压缩包等类型的文件。"));
 
             _appText.Add(KeyValue.New("Help.Encoding", @"关于编码：
 如果发现匹配不到内容，可能因为文件用的编码不对，可用其他编码再查找试试。
 
-可在 app.json 配置文件中扩充可选编码，多个编码用逗号分隔。
-例：UTF-8,GB2312
-
-自动判断 = 自动判断每个文件的编码
+自动判断 = 自动判断每个文件的编码 (只能识别常用的几种编码)
 简体中文 = GB2312
 
 注：自动判断会影响查找效率，除非文件夹内有各种编码的文件，否则应指定具体的编码"));
 
 
-            _appText.Add(KeyValue.New("Help.His", @"关于历史记录：
+            _appText.Add(KeyValue.New("Help.His", @"关于缓存：
 1、 每次的结果保存在Cache文件夹，以避免重复查找。
-      文件名格式：Result_【查找内容】_(【目标文件夹】).cache， 
-      如果需经常使用某历史记录，建议修改文件名中的【查找内容】，以便识别。
+      命名规则：Result_【查找内容】_(【目标文件夹】).cache， 
+      可手工修改文件名中的【查找内容】，以便识别。
 
-2、 可通过右上角的【工具】->【新建数据标签】,存放8  常用数据，减少查数据时
-      在不同程序间来回切换。
-      方法：把整理好的数据复制粘贴到【内容】输入框（一行一条数据），输入标签名称，
-                点击【保存为缓存文件】，即可在历史记录中看到对应标签的记录。
-      (注意：从Excel等复制的数据可能存在编码问题，需转为系统默认的ANSI编码再复制粘贴)
+2、 常用数据可存为数据标签，减少查数据时在不同程序间来回切换。
+      命名规则：Data_【标签名称】_(Cache).cache
+      创建方法：
+            1、在【缓存列表框】右击，点击【创建数据标签】
+            2、把整理好的数据复制粘贴到【内容】框（一行一条数据），输入标签名称， 点击【保存为缓存文件】。
 
 3、程序只显示最近20次记录，如历史记录过多，可在Cache文件夹删除无用记录。
-      自定义的数据标签也在Cache文件夹，类似：Data_【标签名】_(cache).json，
-      删除对应文件即可删除标签数据。"));
+     删除文件即可删除对应标签数据。"));
 
             _appText.Add(KeyValue.New("Help.Ignore", @"关于忽略类型：
 对于图片，视频，压缩包 等文件，查找文本意义不大，
@@ -275,13 +292,16 @@ namespace FindText
 "));
 
             _appText.Add(KeyValue.New("Help.Find", @"关于查找内容：    
-多个查找内容用空格分隔，
-当查找多个内容时，只显示同时包含所有内容的文件。
+1、多个查找内容用空格分隔，当查找多个内容时，只显示同时包含所有内容的文件。
+     不区分内容出现顺序。
 
 例: 输入 12345 abcde
-查找结果只显示同时包含 12345 和 abcde 的文件。"));
+查找结果只显示同时包含 12345 和 abcde 的文件。
 
-            _appText.Add(KeyValue.New("Help.IgnoreError", @"关于忽略文件异常：    
+2、如果使用正则表达式，查找结果的标题可能为随机字符串（因为正则表达式可能包括特殊字符），
+     需可将对应的文件名改为有意义的名称。"));
+
+            _appText.Add(KeyValue.New("Help.IgnoreError", @"关于忽略错误：    
 查找时可能因为无权限、文件被占用，被删除等原因报错，
 启用此选项后，程序将忽略错误继续执行。
 

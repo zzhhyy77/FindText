@@ -32,6 +32,7 @@ namespace FindText.Converts
         #endregion
     }
 
+
     [ValueConversion(typeof(bool), typeof(Visibility))]
     public class TrueToVisibleConverter : IValueConverter
     {
@@ -70,6 +71,7 @@ namespace FindText.Converts
         }
 
     }
+
 
     [ValueConversion(typeof(int), typeof(Visibility))]
     public class NonZeroToVisibleConvert : IValueConverter
@@ -125,6 +127,26 @@ namespace FindText.Converts
         }
     }
 
+
+    [ValueConversion(typeof(object), typeof(Visibility))]
+    public class NonNullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value == null)
+                return Visibility.Collapsed;
+            else
+                return Visibility.Visible;
+
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+
     [ValueConversion(typeof(object), typeof(bool))]
     public class NullToFalseConverter : IValueConverter
     {
@@ -142,6 +164,7 @@ namespace FindText.Converts
             return null;
         }
     }
+
 
     [ValueConversion(typeof(int), typeof(string))]
     public class IntToStringConverter : IValueConverter
@@ -163,6 +186,7 @@ namespace FindText.Converts
         }
     }
 
+
     public class BrushToColorConverter : IValueConverter
     {
         public static readonly BrushToColorConverter Instance = new BrushToColorConverter();
@@ -181,6 +205,7 @@ namespace FindText.Converts
             throw new NotImplementedException();
         }
     }
+
 
     public class BoolToVisibilityConverter : IValueConverter
     {
@@ -206,11 +231,12 @@ namespace FindText.Converts
     {
         public static readonly IntToBrushConverter Instance = new IntToBrushConverter();
 
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null || value.GetType() != typeof(int))
                 return App.Current.Resources["HighlightBrush"] as SolidColorBrush;
-
+            
+            //只有历史标签用
             int i = (int)value;
             if (i == 0)
                 return App.Current.Resources["HighlightBrush"] as SolidColorBrush;
@@ -224,4 +250,6 @@ namespace FindText.Converts
             throw new NotSupportedException();
         }
     }
+
+
 }

@@ -50,14 +50,32 @@ namespace FindText
             //_results = new ObservableCollection<SearchResult>();
             //dgResults.ItemsSource = _results;
             DivSettings.Visibility = Visibility.Collapsed;
-            this.Title = $"{TextCache.Text["Main.Title"]} v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(2)}";
-            textblockVer.Text = $"Ver {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(2)}";
+            string? ver = System.Reflection.Assembly.GetExecutingAssembly()?.GetName()?.Version?.ToString(2);
+            this.Title = $"{App.Current.Resources["Main.Title"]} v{ver}";
+            textblockVer.Text = $"Ver {ver}";
 
-            this.Left = AppCache.Instance.Configs.MainLeft >= 10 ? AppCache.Instance.Configs.MainLeft : 10;
-            this.Top = AppCache.Instance.Configs.MainTop >= 10 ? AppCache.Instance.Configs.MainTop : 10;
-            this.Width = AppCache.Instance.Configs.MainWidth >= 640 ? AppCache.Instance.Configs.MainWidth : 640;
-            this.Height = AppCache.Instance.Configs.MainHeight >= 480 ? AppCache.Instance.Configs.MainHeight : 480;
 
+            if (AppCache.Instance.Configs.MainLeft <= 10 || AppCache.Instance.Configs.MainTop <= 10)
+            {
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+            else
+            {
+                this.Left = AppCache.Instance.Configs.MainLeft;
+                this.Top = AppCache.Instance.Configs.MainTop;
+            }
+
+            if (AppCache.Instance.Configs.MainWidth > 1920 || AppCache.Instance.Configs.MainHeight > 1080 
+                || AppCache.Instance.Configs.MainWidth < 300 || AppCache.Instance.Configs.MainHeight < 200)
+            {
+                this.Width = 860;
+                this.Height = 600;
+            }
+            else
+            {
+                this.Width = AppCache.Instance.Configs.MainWidth;
+                this.Height = AppCache.Instance.Configs.MainHeight;
+            }
         }
 
         private void InitializeEvents()

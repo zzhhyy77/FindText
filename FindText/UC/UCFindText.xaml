@@ -14,6 +14,7 @@
     <UserControl.Resources>
 
         <Converts:WaterMarkConvert x:Key="_waterMarkConvert" />
+        <Converts:NonNullToVisibilityConverter x:Key="_nonNullToVisible" />
 
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource Brush03}" />
@@ -21,15 +22,16 @@
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="FontSize" Value="14" />
         </Style>
-        
+
     </UserControl.Resources>
 
     <UserControl.CommandBindings>
-        <CommandBinding Command="Help"  Executed="HelpCommandHandler"  CanExecute="CanExecuteHandler" />
+        <CommandBinding Command="ApplicationCommands.Help"  Executed="HelpCommandHandler"  CanExecute="CanExecuteHandler" />
+        <CommandBinding Command="ApplicationCommands.Open"  Executed="OpenCommandHandler"  CanExecute="CanExecuteHandler" />
     </UserControl.CommandBindings>
 
 
-        <Grid Background="{DynamicResource BackgroundBrush}" DataContext="{x:Static app:TextCache.Text}" >
+    <Grid Background="{DynamicResource BackgroundBrush}" DataContext="{x:Static app:TextCache.Text}" >
         <Grid.RowDefinitions>
             <RowDefinition Height="48"/>
             <RowDefinition Height="Auto"/>
@@ -60,7 +62,7 @@
             <TextBlock Text="🔤：" Grid.Column="0" Margin="8,0,0,0" HorizontalAlignment="Right" Visibility="Visible" FontSize="18" />
             <TextBox x:Name="inputSearchText" Grid.Column="1" Height="28" MaxWidth="480" Style="{DynamicResource WatermarkTextBoxStyle}"
                      BorderThickness="0,0,0,1"  Foreground="{DynamicResource HighlightBrush}" Margin="0,0,48,0" TabIndex="0" FontSize="16"
-                     localUC:WatermarkHelper.Watermark="{Binding [WM.Search]}" />
+                     localUC:WatermarkDP.Watermark="{Binding [WM.Search]}" />
 
             <Button x:Name="buttonFind" Content="🔍︎" Grid.Column="1" Height="32" Width="48"  IsDefault="True" Margin="0,0,0,4" 
                     Background="Transparent" HorizontalAlignment="Right" FontSize="22" Padding="0" />
@@ -168,7 +170,7 @@
                     <TextBox x:Name="inputIgnores" MinWidth="160" Foreground="{DynamicResource HighlightBrush}" Background="{DynamicResource Brush07}" Text="" Margin="0,0,16,0" BorderThickness="0,0,0,1" />
                     <Popup x:Name="PART_Popup" AllowsTransparency="true" Width="{Binding ElementName=inputIgnores,Path=ActualWidth}"
                           PopupAnimation="Slide" IsOpen="{Binding ElementName=buttonGetExtName, Path=IsChecked}"  >
-                        
+
                         <Border Background="{DynamicResource BackgroundBrush}" BorderBrush="DarkGray" BorderThickness="1" >
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -176,7 +178,7 @@
                                     <RowDefinition Height="32"/>
                                     <RowDefinition Height="90*"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <Grid Grid.Row="0" >
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -209,53 +211,79 @@
 
         </Grid>
 
-        <Grid x:Name="DivHis" Grid.Row="2" Background="{DynamicResource Brush07}"  >
+
+        <Grid x:Name="DivHis" Grid.Row="2"   >
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="23"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="60*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="8"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="🗐 ：" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,3,0,0" FontSize="18" Visibility="Collapsed" />
+            <TextBlock Text="🚩:" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="6,6,0,0" FontSize="14" Visibility="Visible" />
 
-            <ListBox x:Name="listboxHistory" Grid.Column="1" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,3,6,0"
-                    d:ItemsSource="{d:SampleData ItemCount=3}"  Background="{DynamicResource Brush07}" 
+            <ListBox x:Name="listboxCache" Grid.Column="1" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,0,6,0"
+                    d:ItemsSource="{d:SampleData ItemCount=3}"  Background="{DynamicResource BackgroundBrush}" 
                     ScrollViewer.VerticalScrollBarVisibility="Auto" Style="{DynamicResource ListboxStyleGroup}" >
 
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel IsItemsHost="True" Orientation="Horizontal"   />
+                        <WrapPanel IsItemsHost="True" Orientation="Horizontal" Background="{DynamicResource BackgroundBrush}"  />
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
+
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderBrush="Gray" BorderThickness="0" Padding="0" Height="24" >
-                            <Grid  Margin="3,0,3,0"  >
+                        <Border BorderThickness="0"  Height="24" >
+                            <Grid  >
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding Title}" VerticalAlignment="Center" HorizontalAlignment="Left" Grid.Column="0"  MinWidth="48" TextAlignment="Center" 
                                           d:Foreground="{DynamicResource Brush01}" FontSize="14"
-                                          Margin="3,0,3,0" Foreground="{Binding Position,Converter={StaticResource intToBrush}}"  />
+                                          Margin="0,0,3,0" Foreground="{Binding Position,Converter={StaticResource intToBrush}}"  />
 
-                                <Button Content="×"  Width="20" Height="20" Foreground="#FFB81B1B" Tag="{Binding}" Grid.Column="1" 
-                                       d:Visibility="Visible" BorderBrush="Transparent"
+                                <Button Content="❌"  Width="20" Height="20" Foreground="{DynamicResource RedBrush}" Opacity="0.5" Tag="{Binding}" Grid.Column="1" 
+                                       d:Visibility="Visible" BorderBrush="Transparent" FontSize="8"
                                        Visibility="{Binding Position,Converter={StaticResource zeroToVisibility}}"
-                                       Style="{StaticResource EllipseButtonStyle}"  Margin="0,0,0,0"
+                                       Style="{StaticResource EllipseButtonStyle}"  Margin="0,0,3,0"
                                        Click="ListItemButton_Click"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
+
+                <ListBox.ContextMenu>
+                    <ContextMenu >
+                        <MenuItem x:Name="itemMenuCache"  Command="Open" CommandParameter="Cache" Height="28"  >
+                            <MenuItem.Header>
+                                <TextBlock  Text="{Binding [WT.New]}" Foreground="{DynamicResource BackgroundBrush}" />
+                            </MenuItem.Header>
+                            <MenuItem.Icon>
+                                <Image Source="/Assets/title.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem x:Name="itemMenuReLoad"  Command="Open" CommandParameter="Reload" Height="28"  >
+                            <MenuItem.Header>
+                                <TextBlock  Text="{Binding [CM.Refresh]}" Foreground="{DynamicResource BackgroundBrush}" />
+                            </MenuItem.Header>
+                            <MenuItem.Icon>
+                                <Image Source="/Assets/title.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+
             </ListBox>
 
             <Button Command="Help" CommandParameter="His" Style="{DynamicResource HelpButtonStyle}" Grid.Column="2" />
         </Grid>
 
 
-        <Grid x:Name="DivProgress" Grid.RowSpan="3" Visibility="Collapsed"  Background="{DynamicResource Brush06}" >
+        <Grid x:Name="DivProgress" Grid.RowSpan="4" Visibility="Collapsed"  Background="{DynamicResource Brush06}" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="60"/>
                 <ColumnDefinition Width="60*"/>
@@ -264,11 +292,11 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="60"/>
                 <RowDefinition Height="18"/>
-                <RowDefinition Height="28"/>
+                <RowDefinition Height="36"/>
                 <RowDefinition Height="50*"/>
             </Grid.RowDefinitions>
 
-            <TextBlock x:Name="textblockProgressTitle" Text="正在搜索..." Grid.Row="0" Grid.Column="1"  Margin="0,0,18,0" VerticalAlignment="Center" FontSize="16" 
+            <TextBlock x:Name="textblockProgressTitle" Text="" Grid.Row="0" Grid.Column="1"  Margin="0,0,18,0" VerticalAlignment="Center" FontSize="16" 
                       Foreground="{DynamicResource Brush03}" />
 
             <ProgressBar x:Name="progressBar1" Grid.Column="1" Grid.Row="1" Value="90" Maximum="100"  />
@@ -277,7 +305,7 @@
                 <TextBlock x:Name="textblockProgressInfo" Text="" Foreground="{DynamicResource BackgroundBrush}" />
             </StackPanel>
 
-            <Button x:Name="buttonCancel" Grid.Column="1" Grid.Row="2" Height="26" Width="80"  Content="取消"  />
+            <Button x:Name="buttonCancel" Grid.Column="1" Grid.Row="2" Height="26" Width="80"  Content="{Binding [CM.Cancel]}" Background="Transparent" Margin="0,6,0,0" />
 
         </Grid>
 
@@ -285,33 +313,44 @@
         <Grid x:Name="DivResultDataGrid" Grid.Row="4" >
             <!-- 搜索结果 -->
             <DataGrid x:Name="datagridResult" Grid.Row="3" AutoGenerateColumns="False"  CanUserResizeColumns="True" RowHeight="30" RowHeaderWidth="0"
-                      SelectionMode="Extended" ColumnHeaderHeight="30" d:ItemsSource="{d:SampleData ItemCount=30}" FontSize="14" 
+                      SelectionMode="Extended" ColumnHeaderHeight="30" d:ItemsSource="{d:SampleData ItemCount=30}" FontSize="14" CanUserAddRows="False"
                       Foreground="{DynamicResource Brush03}" Background="{DynamicResource BackgroundBrush}" BorderThickness="0,0,0,0"
                       VerticalGridLinesBrush="{StaticResource TransparentBrush}" HorizontalGridLinesBrush="{StaticResource TransparentBrush}"                             
                       >
 
+                <!--<DataGrid.CommandBindings>
+                    <CommandBinding Command="Save"  Executed="DataGridSaveCommandHandler"  CanExecute="DataGridCanExecuteHandler" />
+                    <CommandBinding Command="SaveAs"  Executed="DataGridSaveAsCommandHandler"  CanExecute="DataGridCanExecuteHandler" />
+                    <CommandBinding Command="Delete"  Executed="DataGridDeleteCommandHandler"  CanExecute="DataGridCanExecuteHandler" />
+                </DataGrid.CommandBindings>-->
+
                 <DataGrid.Columns>
-                    
+
+                    <!--<DataGridCheckBoxColumn   Binding="{Binding IsSelected,Mode=TwoWay}" SortMemberPath="IsSelected" />-->
+
                     <DataGridTemplateColumn x:Name="ColumnFilePath" Width="600" SortMemberPath="FilePath" MaxWidth="1920"   IsReadOnly="True" >
                         <DataGridTemplateColumn.Header >
                             <Grid >
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="25*" />
+                                    <ColumnDefinition Width="20*" />
                                     <ColumnDefinition Width="55*"  />
+                                    <ColumnDefinition Width="Auto"  />
+
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding [FT.ColPath],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Right" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                                <TextBlock Text="{Binding [DG.Path],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Right" Margin="8,0,0,0" 
+                                           VerticalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
 
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="26,0,0,0"  >
                                     <TextBox x:Name="inputResultFilter" Grid.Column="1"  Height="23" FontSize="11" MinWidth="160" MaxWidth="220"
-                                         localUC:WatermarkHelper.Watermark="{Binding [FT.GridFind],Source={x:Static app:TextCache.Text}}"
+                                         localUC:WatermarkDP.Watermark="{Binding [DG.Find],Source={x:Static app:TextCache.Text}}"
                                          Style="{DynamicResource WatermarkTextBoxStyle}"
                                          Background="Transparent" BorderThickness="0,0,0,1" Foreground="{DynamicResource HighlightBrush}" BorderBrush="{DynamicResource BorderBrush}" />
 
                                     <StackPanel x:Name="DivOpenSel" Orientation="Horizontal" Visibility="Collapsed" d:Visibility="Visible" >
-                                        <Button x:Name="buttonOpenSelection" Content="{Binding [FT.OpenSel],Source={x:Static app:TextCache.Text}}" Margin="8,0,0,0" Background="Transparent" />
+                                        <Button x:Name="buttonOpenSelection" Content="{Binding [DG.OpenSel],Source={x:Static app:TextCache.Text}}" Margin="8,0,0,0" Background="Transparent" />
                                         <Button Command="Help" CommandParameter="OpenFile" Style="{StaticResource HelpButtonStyle}" />
-                                    </StackPanel>
 
+                                    </StackPanel>
                                 </StackPanel>
 
                             </Grid>
@@ -329,19 +368,30 @@
                     <DataGridTextColumn x:Name="ColumnSize" Binding="{Binding Size}" Width="80" SortMemberPath="Size"  IsReadOnly="True" >
                         <DataGridTextColumn.Header>
                             <Grid>
-                                <TextBlock Text="{Binding [FT.ColSize],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                                <TextBlock Text="{Binding [DG.Size],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
                             </Grid>
                         </DataGridTextColumn.Header>
                     </DataGridTextColumn>
 
-                    <DataGridTemplateColumn  x:Name="ColumnNote" Width="200"  SortMemberPath="Note" CanUserSort="True" MaxWidth="600"  IsReadOnly="False"  >
+                    <DataGridTemplateColumn  x:Name="ColumnNote" Width="220"  SortMemberPath="Note" CanUserSort="True" MaxWidth="600"  IsReadOnly="False"  >
                         <DataGridTemplateColumn.Header >
                             <Grid >
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="30*" />
-                                    <ColumnDefinition Width="Auto"  />
+                                    <ColumnDefinition Width="20*" />
+                                    <ColumnDefinition Width="108"  />
+
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{Binding [FT.ColNote],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" Margin="8,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                                <TextBlock Text="{Binding [DG.Note],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" Margin="0,0,0,0" VerticalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+
+                                <StackPanel x:Name="DivDataGridButtons" Orientation="Horizontal" Grid.Column="1" Visibility="Collapsed"  d:Visibility="Visible" >
+
+                                    <Button x:Name="buttonDataGridSaveAs" Content="🚩" FontSize="16" Grid.Column="1" Height="26" Background="Transparent" BorderBrush="Transparent" 
+                                            ToolTip="{Binding [WT.New],Source={x:Static app:TextCache.Text}}" />
+                                    <Button x:Name="buttonDataGridSave" Content="💾" FontSize="16" Grid.Column="2" Height="26" Background="Transparent" BorderBrush="Transparent" IsEnabled="False" />
+                                    <Button x:Name="buttonDataGridDelete" Content="❌" FontSize="12" Grid.Column="3"  Height="26"  Foreground="{DynamicResource RedBrush}" Background="Transparent" />
+
+                                </StackPanel>
+
                             </Grid>
                         </DataGridTemplateColumn.Header>
 
@@ -353,14 +403,14 @@
                                         <ColumnDefinition Width="90*" />
                                     </Grid.ColumnDefinitions>
                                     <!--<Button x:Name="buttonRowNote" Content="📝" Width="18" FontSize="10" Padding="0" Style="{DynamicResource EllipseButtonStyle}" Grid.Column="0" Opacity="0.8" Background="Transparent" />-->
-                                    <TextBlock Text="{Binding Note}" Grid.Column="1" FontSize="11" Foreground="{DynamicResource ForegroundBrush2}" />
+                                    <TextBlock Text="{Binding Note}" Grid.Column="1" FontSize="11" Foreground="{DynamicResource HighlightBrush}" />
                                 </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
 
                         <DataGridTemplateColumn.CellEditingTemplate >
-                            <DataTemplate>
-                                <TextBox x:Name="editboxNote" Text="{Binding Note,UpdateSourceTrigger=PropertyChanged}" BorderThickness="0" HorizontalAlignment="Stretch" 
+                            <DataTemplate >
+                                <TextBox x:Name="editboxNote" Text="{Binding Note}" BorderThickness="0" HorizontalAlignment="Stretch" TextChanged="editboxNote_TextChanged"
                                          Width="{Binding Path=ActualWidth, ElementName=ColumnNote}" AcceptsReturn="True" FontSize="12" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellEditingTemplate>
@@ -369,15 +419,14 @@
                     <DataGridTextColumn x:Name="ColumnPreview" Binding="{Binding Preview}" Width="200" FontSize="12" SortMemberPath="Preview"  IsReadOnly="True" >
                         <DataGridTextColumn.Header>
                             <Grid>
-                                <TextBlock Text="{Binding [FT.ColPreview],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
+                                <TextBlock Text="{Binding [DG.Preview],Source={x:Static app:TextCache.Text}}" HorizontalAlignment="Center" FontSize="14" FontWeight="DemiBold"  />
                             </Grid>
                         </DataGridTextColumn.Header>
                     </DataGridTextColumn>
 
-                    <DataGridTemplateColumn   IsReadOnly="True" />
 
                 </DataGrid.Columns>
-   
+
             </DataGrid>
 
         </Grid>
@@ -387,7 +436,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto" MinWidth="48"/>
-                <ColumnDefinition Width="Auto" MinWidth="180"/>
+                <ColumnDefinition Width="Auto" MinWidth="48"/>
                 <ColumnDefinition Width="50*"/>
             </Grid.ColumnDefinitions>
             <TextBlock  Text="{Binding [FT.Total]}" Grid.Column="0" Margin="16,0,0,0"  />
@@ -411,7 +460,7 @@
             <TextBox x:Name="textHelp" Text="HelpInfo" Margin="64,48,64,8" FontSize="16" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" 
                        TextWrapping="Wrap" IsReadOnly="True" Background="{DynamicResource Brush06}" BorderThickness="0" Padding="16"
                        Foreground="{DynamicResource ForegroundBrush2}"/>
-            
+
             <Button x:Name="buttonHelpClose" Content="❌" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="16" Foreground="{DynamicResource RedBrush}" 
                     BorderBrush="{StaticResource TransparentBrush}" Style="{StaticResource EllipseButtonStyle}" Width="32" Height="32" Padding="0"/>
 

@@ -146,16 +146,23 @@ namespace FindText.Workers
             string content = string.Empty;
             string preview = string.Empty;
 
-            byte[] bytes = File.ReadAllBytes(filePath);
-            Encoding encoding = EncodingHelper.DetectEncoding(bytes);
-            content = encoding.GetString(bytes);
+            if (!string.IsNullOrEmpty(_option.EncodingName))
+            {
+                content = File.ReadAllText(filePath, _option.FileEncoding);
+            }
+            else
+            {
+                byte[] bytes = File.ReadAllBytes(filePath);
+                Encoding encoding = EncodingHelper.DetectEncoding(bytes);
+                content = encoding.GetString(bytes);
+            }
 
 
             if (_option.IsRegex)
             {
                 if (RegexMatch(content, _option.SearchText))
                 {
-                    preview = content.Substring(0, content.Length < 50 ? content.Length : 50);
+                    preview = content.Substring(0, content.Length < 30 ? content.Length : 30); //一般开头是备注
                     return new TextSearchResult()
                     {
                         FilePath = filePath,
@@ -176,7 +183,7 @@ namespace FindText.Workers
 
                 if (ints.Count == _searchTexts.Count)
                 {
-                    preview = content.Substring(0, content.Length < 50 ? content.Length : 50);
+                    preview = content.Substring(0, content.Length < 30 ? content.Length : 30);
                     return new TextSearchResult()
                     {
                         FilePath = filePath,

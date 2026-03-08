@@ -7,14 +7,13 @@
         xmlns:app="clr-namespace:FindText"
         xmlns:Converts="clr-namespace:FindText.Converts"
         xmlns:localCtrls="clr-namespace:FindText.LocalControls"
-        xmlns:uc="clr-namespace:FindText.UC"
+        xmlns:uc="clr-namespace:FindText.UC"        
         Height="600" Width="900"
         Icon="/Assets/title.png"
         WindowStyle="SingleBorderWindow"    
         BorderBrush="{DynamicResource BorderBrush}"        
         x:Name="mainWnd"
-        Title="{Binding [Main.Title],Source={x:Static app:TextCache.Text}}" 
-        
+        Title="{DynamicResource Main.Title}" 
         >
 
     <Window.Resources>
@@ -89,9 +88,9 @@
             <Path Data="M0,20 L35,20 35,23 0,23 z M0,10 L35,10 35,13 0,13 z M0,0 L35,0 35,3 0,3 z" Fill="{DynamicResource HighlightBrush}" Width="14" Height="12" Stretch="Fill" />
         </Button>
 
-        <StackPanel Grid.ColumnSpan="3" Grid.Row="2" Orientation="Horizontal">
+        <StackPanel Grid.ColumnSpan="3" Grid.Row="2" Orientation="Horizontal" Visibility="Collapsed" >
 
-            <Button  Content="Dubug" Width="80" Click="Button_Click"/>
+            <Button  Content="Dubug" Width="80" Click="Button_Click" IsEnabled="False" />
 
         </StackPanel>
     </Grid>

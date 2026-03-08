@@ -1,6 +1,6 @@
 ﻿namespace FindText.Models
 {
-    public class KeyValue : VModelsBase
+    public class KeyValue 
     {
 
         string _key;
@@ -27,7 +27,6 @@
             set
             {
                 this._value = value;
-                RaisePropertyChanged();
             }
         }
 

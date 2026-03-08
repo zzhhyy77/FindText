@@ -48,10 +48,10 @@ namespace FindText.Helpers
             Border bd = new Border()
             {
                 Margin = new Thickness(4),
-                BorderBrush = App.Current.Resources["HighlightBrush2"] as SolidColorBrush,
+                BorderBrush = App.Current.Resources["GreenBrush"] as SolidColorBrush,
                 BorderThickness = new Thickness(2),
                 Background = App.Current.Resources["Brush06"] as SolidColorBrush,
-                MinHeight = 26,
+                MinHeight = 32,
                 MinWidth = 48,
             };
             Grid grid = new Grid();

@@ -3,9 +3,9 @@
 namespace FindText.UC
 {
 
-    public static class WatermarkHelper
+    public static class WatermarkDP
     {
-        public static readonly DependencyProperty WatermarkProperty = DependencyProperty.RegisterAttached("Watermark", typeof(string), typeof(WatermarkHelper), new PropertyMetadata(string.Empty));
+        public static readonly DependencyProperty WatermarkProperty = DependencyProperty.RegisterAttached("Watermark", typeof(string), typeof(WatermarkDP), new PropertyMetadata(string.Empty));
 
         public static void SetWatermark(DependencyObject element, string value)
         {

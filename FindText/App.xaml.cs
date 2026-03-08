@@ -59,6 +59,7 @@ namespace FindText
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Exception");
+                Application.Current.Shutdown();
             }
         }
 
@@ -94,7 +95,6 @@ namespace FindText
         {
             MessageBox.Show(ex.Message, "全局异常");
         }
-
 
         private bool IsRunning()
         {

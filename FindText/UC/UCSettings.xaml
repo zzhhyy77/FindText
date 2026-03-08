@@ -83,15 +83,18 @@
             </Grid>
         </Border>
 
-        <Border Grid.ColumnSpan="3" Grid.Row="2" Height="80" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="8" CornerRadius="5" >
-            <Grid>
+        <Border Grid.ColumnSpan="3" Grid.Row="2" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Margin="8" CornerRadius="5" >
+            <Grid Margin="12" >
                 <Grid.RowDefinitions>
                     <RowDefinition Height="36"/>
                     <RowDefinition Height="36"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="12"/>
                 </Grid.RowDefinitions>
 
-                <Button x:Name="buttonToolsWnd" Content="{Binding [Tool.ToolsWnd]}" BorderBrush="{DynamicResource BorderBrush}" Width="120" BorderThickness="0,0,0,1" Background="Transparent"  />
+                <Button x:Name="buttonOpenLocal" Content="{Binding [Tool.CacheDir]}" BorderBrush="{DynamicResource BorderBrush}" Grid.Row="0" Width="120" BorderThickness="0,0,0,1" Background="Transparent"  />
+
+                <Button x:Name="buttonToolsWnd" Content="{Binding [Tool.ToolsWnd]}" Visibility="Collapsed" BorderBrush="{DynamicResource BorderBrush}" Grid.Row="1" Width="120" BorderThickness="0,0,0,1" Background="Transparent"  />
             </Grid>
 
         </Border>
