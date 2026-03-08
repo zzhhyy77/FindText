@@ -15,7 +15,7 @@
 
 #### 界面截图
 
-<img src="https://github.com/zzhhyy77/FindText/edit/master/doc/mandwnd.png" title="界面截图" style="zoom💯%;"/>
+<img src="https://github.com/zzhhyy77/FindText/blob/master/mainwnd.png" title="界面截图" style="zoom💯%;"/>
 
 
 ## 其他
